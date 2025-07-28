@@ -28,3 +28,15 @@
 - **UC21** - Eliminare commenti di qualsiasi utente
 - **UC22** - Creare nuove categorie per i post
 - **UC23** - Modificare/Eliminare categorie esistenti
+
+
+
+## Modello del Dominio
+
+<div align="center">
+  <!-- File in radice -->
+  <img src="./modellodominio.svg" alt="Modello del Dominio" />
+
+  <!-- Se invece lo metti in docs/: -->
+  <!-- <img src="docs/modellodominio.svg" alt="Modello del Dominio" /> -->
+</div>
