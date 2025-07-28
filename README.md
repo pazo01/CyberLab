@@ -35,7 +35,7 @@
 
 <div align="center">
   <!-- File in radice -->
-  <img src="./modellodominio.svg" alt="Modello del Dominio" />
+  <img src="./modellodidominio.svg" alt="Modello del Dominio" />
 
   <!-- Se invece lo metti in docs/: -->
   <!-- <img src="docs/modellodominio.svg" alt="Modello del Dominio" /> -->
