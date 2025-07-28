@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' - CyberLab'}">Edit Profile - CyberLab</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/profile.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg">
+        <span th:each="i : ${#numbers.sequence(1, 100)}" class="matrix-cell"></span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab
+                </a>
+                
+                <ul class="navbar-nav">
+                    <li><a th:href="@{/}" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a th:href="@{/labs}" class="nav-link"><i class="fas fa-flask"></i> Labs</a></li>
+                    <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-code"></i> Community</a></li>
+                    <li><a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    
+                    <!-- User Dropdown -->
+                    <li class="user-menu">
+                        <div class="user-dropdown">
+                            <button class="user-btn">
+                                <i class="fas fa-user"></i>
+                                <span th:text="${#authentication.name}">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a th:href="@{/profile}"><i class="fas fa-user-circle"></i> Profile</a>
+                                
+                                <hr>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="profile-edit-container" style="padding-top: 120px;">
+        <div class="container">
+            <!-- Header -->
+            <div class="edit-header">
+                <div class="edit-header-content">
+                    <div class="header-text">
+                        <h1><i class="fas fa-user-edit"></i> Edit Profile</h1>
+                        <p>Update your personal information and preferences</p>
+                    </div>
+                    <div class="header-actions">
+                        <a th:href="@{/profile}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Form Grid -->
+            <div class="edit-form-grid">
+                <!-- Left Column - Profile Information -->
+                <div class="edit-left-column">
+                    <div class="edit-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-id-card"></i> Personal Information</h3>
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{/profile/edit}" method="post" id="profileForm" class="profile-form" enctype="multipart/form-data">
+                                <!-- Avatar Section -->
+                                <div class="avatar-edit-section">
+                                    <div class="current-avatar">
+                                        <div class="profile-avatar large">
+                                            <i class="fas fa-user" th:if="${user.avatar == null}"></i>
+                                            <img th:if="${user.avatar != null}" th:src="@{'/uploads/avatars/' + ${user.avatar}}" th:alt="${user.username + ' avatar'}">
+                                        </div>
+                                        <div class="avatar-overlay">
+                                            <i class="fas fa-camera"></i>
+                                        </div>
+                                    </div>
+                                    <div class="avatar-controls">
+                                        <input type="file" id="avatarInput" name="avatar" accept="image/*" style="display: none;">
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('avatarInput').click()">
+                                            <i class="fas fa-upload"></i> Change Avatar
+                                        </button>
+                                        <p class="help-text">Recommended: 200x200px, max 2MB</p>
+                                    </div>
+                                </div>
+
+                                <!-- Basic Info -->
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="name" class="form-label">
+                                            <i class="fas fa-user"></i> First Name
+                                        </label>
+                                        <input type="text" id="name" name="name" class="form-input" 
+                                               th:value="${user.name}" placeholder="Enter your first name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="surname" class="form-label">
+                                            <i class="fas fa-user"></i> Last Name
+                                        </label>
+                                        <input type="text" id="surname" name="surname" class="form-input" 
+                                               th:value="${user.surname}" placeholder="Enter your last name">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="username" class="form-label">
+                                        <i class="fas fa-at"></i> Username
+                                    </label>
+                                    <input type="text" id="username" name="username" class="form-input" 
+                                           th:value="${user.username}" readonly disabled>
+                                    <small class="help-text">Username cannot be changed</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope"></i> Email Address
+                                    </label>
+                                    <input type="email" id="email" name="email" class="form-input" 
+                                           th:value="${user.email}" required>
+                                    <small class="help-text">We'll send important notifications to this email</small>
+                                </div>
+
+                                <!-- Bio Section -->
+                                <div class="form-group">
+                                    <label for="profileInfo" class="form-label">
+                                        <i class="fas fa-quote-left"></i> Bio
+                                    </label>
+                                    <textarea id="profileInfo" name="profileInfo" class="form-input" rows="4" 
+                                              placeholder="Tell us about yourself, your interests, and experience..."
+                                              th:text="${user.profileInfo}"></textarea>
+                                    <div class="char-counter">
+                                        <span id="charCount">0</span> / 500 characters
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                   
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Account Security -->
+                <div class="edit-right-column">
+                    <!-- Account Security -->
+                    <div class="edit-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shield-alt"></i> Account Security</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="security-info">
+                                <div class="security-item">
+                                    <div class="security-icon">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div class="security-content">
+                                        <h5>Account Created</h5>
+                                        <p th:text="${#temporals.format(user.joinDate, 'dd MMMM yyyy HH:mm')}">15 January 2024 14:30</p>
+                                    </div>
+                                </div>
+
+                                <div class="security-item">
+                                    <div class="security-icon" th:classappend="${user.status.name() == 'ACTIVE' ? 'active' : 'inactive'}">
+                                        <i class="fas fa-circle"></i>
+                                    </div>
+                                    <div class="security-content">
+                                        <h5>Account Status</h5>
+                                        <p th:text="${user.status.name()}" th:classappend="${user.status.name().toLowerCase()}">ACTIVE</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div id="deleteAccountModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Delete Account</h3>
+                <button class="modal-close" onclick="hideDeleteConfirmation()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete your account? This action is irreversible and will:</p>
+                <ul>
+                    <li>Permanently delete all your posts and comments</li>
+                    <li>Remove your lab progress and achievements</li>
+                    <li>Delete your profile and personal information</li>
+                    <li>Revoke access to all platform features</li>
+                </ul>
+                <p><strong>Type your username to confirm:</strong></p>
+                <input type="text" id="deleteConfirmInput" class="form-input" placeholder="Enter your username">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideDeleteConfirmation()">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn" disabled onclick="deleteAccount()">
+                    <i class="fas fa-trash"></i> Delete My Account
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Character counter for bio
+            const bioTextarea = document.getElementById('profileInfo');
+            const charCount = document.getElementById('charCount');
+            
+            function updateCharCount() {
+                const count = bioTextarea.value.length;
+                charCount.textContent = count;
+                charCount.className = count > 450 ? 'char-count warning' : 'char-count';
+            }
+            
+            bioTextarea.addEventListener('input', updateCharCount);
+            updateCharCount(); // Initial count
+
+            // Avatar preview
+            const avatarInput = document.getElementById('avatarInput');
+
+            avatarInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Validate file size (max 2MB)
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('File size must be less than 2MB');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Validate file type
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const avatarContainer = document.querySelector('.profile-avatar');
+                        avatarContainer.innerHTML = `<img src="${e.target.result}" alt="New avatar preview">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Delete account confirmation
+            const deleteConfirmInput = document.getElementById('deleteConfirmInput');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const currentUsername = '[[${user.username}]]';
+
+            deleteConfirmInput.addEventListener('input', function() {
+                confirmDeleteBtn.disabled = this.value !== currentUsername;
+            });
+        });
+
+        // Delete account modal functions
+        function showDeleteConfirmation() {
+            document.getElementById('deleteAccountModal').style.display = 'flex';
+        }
+
+        function hideDeleteConfirmation() {
+            document.getElementById('deleteAccountModal').style.display = 'none';
+            document.getElementById('deleteConfirmInput').value = '';
+            document.getElementById('confirmDeleteBtn').disabled = true;
+        }
+
+        function deleteAccount() {
+            // This would typically submit a form to delete the account
+            alert('Account deletion would be processed here');
+            hideDeleteConfirmation();
+        }
+
+        // Form validation
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value;
+            if (!email || !email.includes('@')) {
+                e.preventDefault();
+                alert('Please enter a valid email address');
+                return;
+            }
+        });
+    </script>
+</body>
+</html>

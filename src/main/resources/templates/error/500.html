@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error | CyberLab</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/errors.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+	</head>
+	<body>
+		<!-- Matrix Background -->
+		   <div class="matrix-bg">
+		       <span th:each="i : ${#numbers.sequence(1, 300)}" class="matrix-cell"></span>
+		   </div>
+		   
+		   <!-- Navigation -->
+		   <nav class="navbar">
+		       <div class="container">
+		           <div class="navbar-content">
+		               <a th:href="@{/}" class="navbar-brand">
+		                   <i class="fas fa-shield-alt"></i>
+		                   CyberLab
+		               </a>
+		               
+		               <ul class="navbar-nav">
+		                   <li><a th:href="@{/}" class="nav-link active"><i class="fas fa-home"></i> Home</a></li>
+		                   <li><a th:href="@{/labs}" class="nav-link"><i class="fas fa-flask"></i> Labs</a></li>
+		                   <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-code"></i> Community</a></li>
+				                   
+		                   <!-- User Menu -->
+		                   <li sec:authorize="isAuthenticated()">
+		                       <a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+		                   </li>
+		                   <li sec:authorize="hasRole('ADMIN')">
+		                       <a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-cog"></i> Admin</a>
+		                   </li>
+		                   
+		                   <!-- Auth Links -->
+		                   <li sec:authorize="!isAuthenticated()">
+		                       <a th:href="@{/login}" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+		                   </li>
+		                   <li sec:authorize="!isAuthenticated()">
+		                       <a th:href="@{/register}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Join</a>
+		                   </li>
+		                   
+		                   <!-- User Dropdown -->
+		                   <li sec:authorize="isAuthenticated()" class="user-menu">
+		                       <div class="user-dropdown">
+		                           <button class="user-btn">
+		                               <i class="fas fa-user"></i>
+		                               <span sec:authentication="name">User</span>
+		                               <i class="fas fa-chevron-down"></i>
+		                           </button>
+		                           <div class="dropdown-content">
+		                               <a th:href="@{/profile}"><i class="fas fa-user-circle"></i> Profile</a>
+		                              
+		                               <hr>
+		                               <form th:action="@{/logout}" method="post">
+		                                   <button type="submit" class="logout-btn">
+		                                       <i class="fas fa-sign-out-alt"></i> Logout
+		                                   </button>
+		                               </form>
+		                           </div>
+		                       </div>
+		                   </li>
+		               </ul>
+		           </div>
+		       </div>
+		   </nav>
+
+    <!-- Main Content -->
+    <main class="error-container critical-error" style="padding-top: 80px;">
+        <div class="container">
+            <div class="error-content">
+                <!-- Critical Alert Banner -->
+                <div class="critical-banner">
+                    <div class="alert-pulse"></div>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>CRITICAL SYSTEM ERROR</span>
+                </div>
+
+                <!-- Page Title -->
+                <div class="error-title">
+                    <h1 style="color: #ff4444; text-align: center; margin-bottom: 20px; font-family: 'Courier New', monospace; text-shadow: 0 0 10px #ff4444;">
+                        500 - Server Error | CyberLab
+                    </h1>
+                </div>
+
+                <!-- Error Code -->
+                <div class="error-code">
+                    <div class="code-container">
+                        <span class="error-digit glitch-critical" data-text="5">5</span>
+                        <span class="error-digit glitch-critical" data-text="0">0</span>
+                        <span class="error-digit glitch-critical" data-text="0">0</span>
+                    </div>
+                    <div class="error-subtitle">INTERNAL SERVER ERROR</div>
+                </div>
+
+                <!-- Error Message -->
+                <div class="error-message">
+                    <div class="error-icon-container">
+                        <div class="error-icon critical">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="critical-waves">
+                            <div class="wave"></div>
+                            <div class="wave"></div>
+                            <div class="wave"></div>
+                        </div>
+                    </div>
+                    
+                    <h1>System Malfunction Detected</h1>
+                    <p class="error-description">
+                        A critical error has occurred in our server infrastructure. Our cybersecurity systems have detected an anomaly and are working to restore normal operations.
+                    </p>
+
+                    <!-- Enhanced Terminal Error Log -->
+                    <div class="terminal-error critical-terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-controls">
+                                <span class="control red active"></span>
+                                <span class="control yellow warning"></span>
+                                <span class="control green offline"></span>
+                            </div>
+                            <span class="terminal-title">cyberlab:~$ system_error_log</span>
+                            <div class="terminal-status critical">CRITICAL</div>
+                        </div>
+                        <div class="terminal-body">
+                            <div class="terminal-line">
+                                <span class="prompt error">cyberlab@server:~$</span> 
+                                <span class="command">500 INTERNAL_SERVER_ERROR</span>
+                            </div>
+                            <div class="terminal-line">
+                                <span class="error-text">[ERROR] Service temporarily unavailable</span>
+                            </div>
+                            <div class="terminal-line">
+                                <span class="error-text">[ERROR] Stack trace: RuntimeException at core.handler</span>
+                            </div>
+                            <div class="terminal-line">
+                                <span class="info-text">Timestamp: <span id="errorTime"></span></span>
+                            </div>
+                            <div class="terminal-line">
+                                <span class="info-text">Error ID: <span id="errorId"></span></span>
+                            </div>
+                            
+                            <div class="terminal-line">
+                                <span class="success-text">[INFO] Backup systems online</span>
+                            </div>
+                            <div class="terminal-line cursor-line">
+                                <span class="prompt recovery">recovery@cyberlab:~$</span>
+                                <span class="cursor critical">_</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set error timestamp and ID
+            const errorTime = document.getElementById('errorTime');
+            const errorId = document.getElementById('errorId');
+            
+            if (errorTime) {
+                errorTime.textContent = new Date().toISOString();
+            }
+            
+            if (errorId) {
+                errorId.textContent = generateErrorId();
+            }
+
+            // Create matrix background
+            createMatrixBackground();
+
+            // Critical glitch animation for 500 digits
+            setInterval(() => {
+                const digits = document.querySelectorAll('.error-digit');
+                digits.forEach(digit => {
+                    if (Math.random() > 0.7) {
+                        digit.classList.add('glitch-active');
+                        setTimeout(() => {
+                            digit.classList.remove('glitch-active');
+                        }, 150);
+                    }
+                });
+            }, 1000);
+
+            // Terminal cursor blinking
+            const cursor = document.querySelector('.cursor.critical');
+            if (cursor) {
+                setInterval(() => {
+                    cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
+                }, 300);
+            }
+        });
+
+        function generateErrorId() {
+            return 'ERR-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+
+        function createMatrixBackground() {
+            const matrixBg = document.querySelector('.matrix-bg');
+            if (!matrixBg) return;
+
+            // Clear existing content
+            matrixBg.innerHTML = '';
+
+            // Create matrix cells
+            for (let i = 0; i < 200; i++) {
+                const cell = document.createElement('span');
+                cell.className = 'matrix-cell critical-cell';
+                matrixBg.appendChild(cell);
+
+                // Add random animation
+                setTimeout(() => {
+                    if (Math.random() > 0.7) {
+                        cell.classList.add('critical-active');
+                        setTimeout(() => {
+                            cell.classList.remove('critical-active');
+                        }, 800);
+                    }
+                }, Math.random() * 3000);
+            }
+        }
+
+        function refreshPage() {
+            const btn = document.querySelector('.retry-btn');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Retrying...';
+                btn.disabled = true;
+            }
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

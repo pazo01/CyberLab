@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle != null ? pageTitle + ' - CyberLab' : 'CyberLab - Cybersecurity Learning Platform'}">CyberLab</title>
+    
+    <!-- Meta Tags -->
+    <meta name="description" content="CyberLab - Advanced Cybersecurity Learning Platform with Virtual Labs">
+    <meta name="keywords" content="cybersecurity, hacking, penetration testing, security labs, XSS, SQL injection">
+    <meta name="author" content="CyberLab Team">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" th:href="@{/images/favicon.ico}">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/responsive.css}">
+    
+    <!-- Page-specific CSS -->
+    <th:block th:fragment="css"></th:block>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Matrix Background for specific pages -->
+    <div th:if="${matrixBackground}" class="matrix-bg">
+        <span th:each="i : ${#numbers.sequence(1, 200)}" class="matrix-cell"></span>
+    </div>
+    
+    <!-- Navigation Bar -->
+    <nav class="navbar" th:fragment="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <!-- Brand Logo -->
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab
+                </a>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <!-- Navigation Links -->
+                <ul class="navbar-nav" id="navbarNav">
+                    <!-- Public Links -->
+                    <li class="nav-item">
+                        <a th:href="@{/}" class="nav-link">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/labs}" class="nav-link">
+                            <i class="fas fa-flask"></i> Labs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/posts}" class="nav-link">
+                            <i class="fas fa-code"></i> Community
+                        </a>
+                    </li>
+                    
+                    <!-- User Links (when authenticated) -->
+                    <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN')">
+                        <a th:href="@{/dashboard}" class="nav-link">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    
+                    <!-- Admin Links -->
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/admin/dashboard}" class="nav-link">
+                            <i class="fas fa-cog"></i> Admin
+                        </a>
+                    </li>
+                    
+					<!-- User Menu (when authenticated) -->
+					<li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+					    <a href="#" class="nav-link dropdown-toggle" id="userDropdown">
+					        <i class="fas fa-user"></i>
+					        <span sec:authentication="name">User</span>
+					        <i class="fas fa-chevron-down"></i>
+					    </a>
+					    <ul class="dropdown-menu">
+					        <!-- ✅ NASCONDI Profile aggiungendo sec:authorize -->
+					        <li sec:authorize="!hasRole('ADMIN')">
+					            <a th:href="@{/profile}" class="dropdown-link">
+					                <i class="fas fa-user-circle"></i> Profile
+					            </a>
+					        </li>
+					        
+					        <!-- ✅ OPPURE se vuoi nasconderlo solo per utenti non autenticati: -->
+					        <!-- <li sec:authorize="hasRole('USER')">
+					            <a th:href="@{/profile}" class="dropdown-link">
+					                <i class="fas fa-user-circle"></i> Profile
+					            </a>
+					        </li> -->
+					        
+					        <li>
+					            <form th:action="@{/logout}" method="post" style="display: inline;">
+					                <button type="submit" class="dropdown-link btn-link">
+					                    <i class="fas fa-sign-out-alt"></i> Logout
+					                </button>
+					            </form>
+					        </li>
+					    </ul>
+					</li>
+                    
+                    <!-- Guest Links (when not authenticated) -->
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/login}" class="nav-link">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/register}" class="nav-link btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Join
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Flash Messages -->
+        <div class="flash-messages" th:if="${success or error or warning or info}">
+            <div class="container">
+                <div th:if="${success}" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${success}">Success message</span>
+                    <button class="alert-close">&times;</button>
+                </div>
+                <div th:if="${error}" class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span th:text="${error}">Error message</span>
+                    <button class="alert-close">&times;</button>
+                </div>
+                <div th:if="${warning}" class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span th:text="${warning}">Warning message</span>
+                    <button class="alert-close">&times;</button>
+                </div>
+                <div th:if="${info}" class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span th:text="${info}">Info message</span>
+                    <button class="alert-close">&times;</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Page Content -->
+        <div th:replace="${contentTemplate}">
+            <!-- Content will be inserted here -->
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer" th:fragment="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>CyberLab</h4>
+                    <p>Advanced cybersecurity education platform with hands-on virtual labs.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-discord"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Learn</h5>
+                    <ul>
+                        <li><a th:href="@{/labs}">Virtual Labs</a></li>
+                        <li><a th:href="@{/posts}">Community Posts</a></li>
+                        <li><a th:href="@{/categories}">Categories</a></li>
+                        <li><a th:href="@{/stats}">Statistics</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Community</h5>
+                    <ul>
+                        <li><a th:href="@{/posts}">Discussions</a></li>
+                        <li><a th:href="@{/feed}">Latest Posts</a></li>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">GitHub</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Support</h5>
+                    <ul>
+                        <li><a th:href="@{/about}">About</a></li>
+                        <li><a th:href="@{/contact}">Contact</a></li>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    <p>&copy; 2024 CyberLab. All rights reserved.</p>
+                    <p>Secure • Educational • Open Source</p>
+                </div>
+                <div class="footer-security">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Encrypted Connection</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script th:src="@{/js/app.js}"></script>
+    <script th:src="@{/js/utils.js}"></script>
+    
+    <!-- Page-specific JavaScript -->
+    <th:block th:fragment="scripts"></th:block>
+    
+    <!-- Global JavaScript -->
+    <script>
+        // Initialize global features
+        document.addEventListener('DOMContentLoaded', function() {
+            initNavigation();
+            initFlashMessages();
+            initDropdowns();
+            initMobileMenu();
+        });
+    </script>
+</body>
+</html>

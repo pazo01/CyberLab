@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directory Traversal Challenge - CyberLab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Matrix Background */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .matrix-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 140, 0, 0.08), transparent);
+            animation: matrix-flow 25s linear infinite;
+        }
+
+        @keyframes matrix-flow {
+            0% { transform: translateX(-100%) rotate(0deg); }
+            100% { transform: translateX(100%) rotate(360deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Enhanced Header */
+        .header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 140, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff8c00, #ff6347, #ffa500);
+            animation: file-glow 3s linear infinite;
+        }
+
+        @keyframes file-glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+        }
+
+        .challenge-title {
+            font-size: 1.8rem;
+            color: #ff8c00;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .challenge-title::before {
+            content: '📁';
+            font-size: 1.6rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .objective {
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.2), rgba(255, 165, 0, 0.1));
+            border: 1px solid rgba(255, 140, 0, 0.4);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .objective::before {
+            content: '🎯';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 140, 0, 0.4);
+        }
+
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            min-height: 0;
+            height: calc(100vh - 200px);
+        }
+
+        /* Enhanced Vulnerable App */
+        .vulnerable-app {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vulnerable-app:hover {
+            border-color: rgba(255, 140, 0, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 140, 0, 0.2);
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+            padding: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .app-header::before {
+            content: '📂';
+            font-size: 1.2rem;
+            animation: folder-blink 4s infinite;
+        }
+
+        @keyframes folder-blink {
+            0%, 90% { opacity: 1; }
+            95% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .app-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        /* Enhanced File Explorer */
+        .file-explorer {
+            background: linear-gradient(135deg, rgba(230, 126, 34, 0.1), rgba(211, 84, 0, 0.1));
+            border: 1px solid rgba(230, 126, 34, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .file-explorer h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-explorer h3::before {
+            content: '📋';
+            font-size: 1.2rem;
+        }
+
+        .current-path {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff8c00;
+            color: #ffa500;
+        }
+
+        .file-input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .file-input:focus {
+            outline: none;
+            border-color: #ff8c00;
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .file-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff8c00, #ff6347);
+            color: #000;
+            border: 1px solid #ff8c00;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.4);
+        }
+
+        /* Enhanced File Content Display */
+        .file-content {
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff41;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Enhanced File System */
+        .file-system {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .file-system h4 {
+            color: #ff8c00;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-system h4::before {
+            content: '🗂️';
+            font-size: 1.1rem;
+        }
+
+        .directory {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+        }
+
+        .file {
+            margin-left: 20px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .file:hover::before {
+            left: 100%;
+        }
+
+        .file:hover {
+            background: rgba(255, 140, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .file.sensitive {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 3px solid #e74c3c;
+            color: #ff6b6b;
+        }
+
+        /* Enhanced Control Panel */
+        .control-panel {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            padding: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .panel-header::before {
+            content: '⚡';
+            font-size: 1.2rem;
+            animation: pulse 2s infinite;
+        }
+
+        .panel-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        /* Enhanced Progress Section */
+        .progress-section {
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(39, 174, 96, 0.1));
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .progress-section h4 {
+            color: #ff8c00;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-section h4::before {
+            content: '📊';
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff8c00, #27ae60);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            width: 0%;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #ff8c00;
+            font-weight: 600;
+        }
+
+        /* Enhanced Target Files */
+        .target-files {
+            background: linear-gradient(135deg, rgba(255, 243, 205, 0.1), rgba(255, 234, 167, 0.1));
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .target-files h5 {
+            color: #ffc107;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .target-files h5::before {
+            content: '🎯';
+            font-size: 1rem;
+        }
+
+        .target-file {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            border-left: 3px solid #f39c12;
+            color: #ffa500;
+        }
+
+        /* Enhanced Challenge Section */
+        .challenge-section {
+            margin-bottom: 25px;
+        }
+
+        .challenge-section h4 {
+            color: #fff;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ff8c00;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .payload-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            resize: vertical;
+            min-height: 100px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #ff8c00;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .payload-input:focus {
+            outline: none;
+            border-color: #ff8c00;
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+        }
+
+        .payload-input::placeholder {
+            color: rgba(255, 140, 0, 0.6);
+        }
+
+        /* Enhanced Payload Suggestions */
+        .payload-suggestions {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .payload-suggestions h5 {
+            margin-bottom: 15px;
+            color: #ff8c00;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payload-suggestions h5::before {
+            content: '💡';
+            font-size: 1rem;
+        }
+
+        .payload-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #ffa500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payload-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .payload-item:hover::before {
+            left: 100%;
+        }
+
+        .payload-item:hover {
+            background: rgba(255, 140, 0, 0.1);
+            border-color: #ff8c00;
+            transform: translateX(5px);
+        }
+
+        /* Enhanced Console Output */
+        .console-output {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            min-height: 150px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .console-line {
+            margin-bottom: 8px;
+            padding: 3px 0;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .console-success { color: #2ecc71; }
+        .console-error { color: #e74c3c; }
+        .console-warning { color: #f39c12; }
+        .console-info { color: #3498db; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+                gap: 15px;
+                height: auto;
+                min-height: calc(100vh - 180px);
+            }
+            
+            .container {
+                padding: 15px;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .app-content,
+            .panel-content {
+                padding: 20px;
+            }
+
+            .vulnerable-app,
+            .control-panel {
+                min-height: 400px;
+            }
+
+            .challenge-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg"></div>
+    
+    <div class="container">
+        <!-- Enhanced Header -->
+        <div class="header">
+            <div class="challenge-title">Directory Traversal Challenge - File System Access</div>
+            <div class="objective">
+                <strong>Obiettivo:</strong> Sfrutta la vulnerabilità di Directory Traversal per accedere a file sensibili al di fuori della directory web.
+                <br><strong>Target:</strong> Leggi il file <code>/etc/passwd</code> o <code>/flag.txt</code>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Vulnerable Application -->
+            <div class="vulnerable-app">
+                <div class="app-header">FileReader - Sistema di Lettura File Vulnerabile</div>
+                <div class="app-content">
+                    <!-- File Explorer -->
+                    <div class="file-explorer">
+                        <h3>Esplora File</h3>
+                        
+                        <div class="current-path" id="currentPath">
+                            Percorso corrente: /var/www/html/public/
+                        </div>
+                        
+                        <div class="file-input-group">
+                            <input type="text" id="fileInput" class="file-input" 
+                                   placeholder="Inserisci il nome del file da leggere..." 
+                                   value="index.html">
+                            <button class="btn btn-primary" onclick="readFile()">📖 Leggi File</button>
+                        </div>
+                        
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-top: 10px;">
+                            💡 Esempio: <code>documents/readme.txt</code> oppure <code>../config.php</code>
+                        </div>
+                    </div>
+
+                    <!-- File Content Display -->
+                    <div>
+                        <h4 style="color: #fff; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <span>📄</span> Contenuto File
+                        </h4>
+                        <div class="file-content" id="fileContent">
+                            Seleziona un file da leggere...
+                        </div>
+                    </div>
+
+                    <!-- File System Structure -->
+                    <div class="file-system">
+                        <h4>Struttura File System (Solo per riferimento)</h4>
+                        
+                        <div class="directory">
+                            📁 /var/www/html/public/ (Directory Web)
+                            <div class="file" onclick="loadFile('index.html')">📄 index.html</div>
+                            <div class="file" onclick="loadFile('style.css')">📄 style.css</div>
+                            <div class="file" onclick="loadFile('documents/readme.txt')">📄 documents/readme.txt</div>
+                        </div>
+                        
+                        <div class="directory">
+                            📁 /var/www/html/ (Directory Principale)
+                            <div class="file sensitive" onclick="loadFile('../config.php')">🔒 config.php</div>
+                            <div class="file sensitive" onclick="loadFile('../admin.txt')">🔒 admin.txt</div>
+                        </div>
+                        
+                        <div class="directory">
+                            📁 /etc/ (Directory Sistema)
+                            <div class="file sensitive" onclick="loadFile('../../etc/passwd')">🚨 passwd</div>
+                            <div class="file sensitive" onclick="loadFile('../../etc/hosts')">🚨 hosts</div>
+                        </div>
+                        
+                        <div class="directory">
+                            📁 / (Root)
+                            <div class="file sensitive" onclick="loadFile('../../../flag.txt')">🏆 flag.txt</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="panel-header">Pannello Directory Traversal</div>
+                <div class="panel-content">
+                    <!-- Progress Section -->
+                    <div class="progress-section">
+                        <h4>Progresso Challenge</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="progressText">0% - Inizia la challenge!</span>
+                        </div>
+                    </div>
+
+                    <!-- Target Files -->
+                    <div class="target-files">
+                        <h5>File Target</h5>
+                        <div class="target-file">
+                            📄 /etc/passwd - File utenti sistema
+                        </div>
+                        <div class="target-file">
+                            🏆 /flag.txt - Flag della challenge
+                        </div>
+                        <div class="target-file">
+                            🔧 ../config.php - Configurazione app
+                        </div>
+                    </div>
+
+                    <!-- Payload Section -->
+                    <div class="challenge-section">
+                        <h4>🚀 Testa Path Traversal</h4>
+                        <textarea id="payloadInput" class="payload-input" 
+                                  placeholder="Inserisci il path da testare..."></textarea>
+                        <button class="btn btn-primary" onclick="testPayload()">🧪 Testa Path</button>
+                    </div>
+
+                    <!-- Payload Suggestions -->
+                    <div class="payload-suggestions">
+                        <h5>Path Traversal Payloads</h5>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            ../config.php
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            ../../etc/passwd
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            ../../../flag.txt
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            ....//....//etc/passwd
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            ..%2f..%2fetc%2fpasswd
+                        </div>
+                    </div>
+
+                    <!-- Console Output -->
+                    <div class="challenge-section">
+                        <h4>📟 Console Path Traversal</h4>
+                        <div class="console-output" id="consoleOutput">
+                            <div class="console-line console-info">🔄 FileReader inizializzato</div>
+                            <div class="console-line console-info">💡 Prova ad accedere a file fuori dalla directory web</div>
+                            <div class="console-line console-warning">⚠️ Obiettivo: leggere /etc/passwd o /flag.txt</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="clearConsole()">🗑️ Pulisci Console</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class DirectoryTraversalChallenge {
+            constructor() {
+                this.startTime = Date.now();
+                this.currentStep = 1;
+                this.maxSteps = 4;
+                this.completed = false;
+                this.attempts = 0;
+                this.basePath = '/var/www/html/public/';
+                
+                // Mock file system
+                this.fileSystem = {
+                    'index.html': '<html><head><title>Welcome</title></head><body><h1>Welcome to FileReader!</h1><p>This is a simple file reading application.</p></body></html>',
+                    'style.css': 'body { font-family: Arial; margin: 0; padding: 20px; }\nh1 { color: #333; }\np { line-height: 1.6; }',
+                    'documents/readme.txt': 'FileReader Application\n===================\n\nThis application allows users to read files from the public directory.\nPlease only access authorized files.\n\nVersion: 1.0\nAuthor: WebDev Team',
+                    '../config.php': '<?php\n// Database Configuration\n$db_host = "localhost";\n$db_user = "webapp";\n$db_pass = "supersecret123";\n$db_name = "fileapp";\n\n// Admin credentials\n$admin_user = "admin";\n$admin_pass = "admin123456";\n\n// Security token\n$secret_key = "abc123xyz789";\n?>',
+                    '../admin.txt': 'ADMIN PANEL ACCESS\n================\n\nUsername: admin\nPassword: secretadmin2023\nAccess Level: Full\n\nLast Login: 2023-10-15 14:30:22\nIP: 192.168.1.100\n\nNOTE: Keep this file secure!',
+                    '../../etc/passwd': 'root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nwebapp:x:1000:1000:Web Application User:/home/webapp:/bin/bash\nadmin:x:1001:1001:Admin User:/home/admin:/bin/bash',
+                    '../../etc/hosts': '127.0.0.1\tlocalhost\n127.0.1.1\tfileserver\n\n# The following lines are desirable for IPv6 capable hosts\n::1     ip6-localhost ip6-loopback\nfe00::0 ip6-localnet\nff00::0 ip6-mcastprefix\nff02::1 ip6-allnodes\nff02::2 ip6-allrouters',
+                    '../../../flag.txt': '🏆 CONGRATULATIONS! 🏆\n\nYou have successfully exploited the Directory Traversal vulnerability!\n\nFlag: CYBERLAB{d1r3ct0ry_tr4v3rs4l_m4st3r}\n\nThis demonstrates how improper input validation can lead to\nunauthorized file system access.\n\nPOINTS EARNED: 150\nSKILL LEVEL: Advanced\n\n🎉 Challenge Completed! 🎉'
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.logToConsole('🎯 Challenge Directory Traversal iniziata!', 'info');
+                this.loadFile('index.html'); // Load default file
+            }
+
+            bindEvents() {
+                document.getElementById('fileInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.readFile();
+                    }
+                });
+
+                window.addEventListener('message', (event) => {
+                    if (event.data.type === 'check-solution') {
+                        this.checkCurrentSolution();
+                    }
+                });
+            }
+
+            readFile() {
+                const filePath = document.getElementById('fileInput').value.trim();
+                if (!filePath) {
+                    this.logToConsole('❌ Inserisci un percorso file valido', 'error');
+                    return;
+                }
+
+                this.attempts++;
+                this.logToConsole('🔍 Tentativo ' + this.attempts + ': "' + filePath + '"', 'info');
+
+                // Update current path display
+                this.updateCurrentPath(filePath);
+
+                // Check for directory traversal patterns
+                this.checkForTraversal(filePath);
+
+                // Load file content
+                this.loadFileContent(filePath);
+            }
+
+            updateCurrentPath(filePath) {
+                let displayPath = this.basePath;
+                if (filePath.startsWith('../')) {
+                    displayPath += filePath;
+                } else {
+                    displayPath += filePath;
+                }
+                
+                document.getElementById('currentPath').textContent = 'Percorso richiesto: ' + displayPath;
+            }
+
+            checkForTraversal(filePath) {
+                // Step 1: Basic traversal attempt
+                if (filePath.includes('../') && this.currentStep === 1) {
+                    this.completeStep(1);
+                    this.logToConsole('✅ Step 1: Directory Traversal rilevato!', 'success');
+                }
+
+                // Step 2: Multiple directory levels
+                if (filePath.includes('../../') && this.currentStep <= 2) {
+                    this.completeStep(2);
+                    this.logToConsole('✅ Step 2: Traversal multi-livello!', 'success');
+                }
+
+                // Step 3: System file access
+                if ((filePath.includes('etc/') || filePath.includes('config')) && this.currentStep <= 3) {
+                    this.completeStep(3);
+                    this.logToConsole('✅ Step 3: Accesso a file di sistema!', 'success');
+                }
+            }
+
+            loadFileContent(filePath) {
+                const contentDiv = document.getElementById('fileContent');
+                
+                if (this.fileSystem[filePath]) {
+                    const content = this.fileSystem[filePath];
+                    contentDiv.textContent = content;
+                    
+                    this.logToConsole('✅ File caricato: ' + filePath, 'success');
+                    
+                    // Check for sensitive files
+                    if (filePath.includes('passwd') || filePath.includes('flag.txt')) {
+                        this.handleSensitiveFileAccess(filePath, content);
+                    } else if (filePath.includes('config') || filePath.includes('admin')) {
+                        this.logToConsole('⚠️ File sensibile acceduto!', 'warning');
+                    }
+                    
+                } else {
+                    // File not found - simulate different responses
+                    if (filePath.includes('../')) {
+                        if (this.isBlockedPath(filePath)) {
+                            contentDiv.textContent = 'Errore: Accesso negato. Path non autorizzato.';
+                            this.logToConsole('❌ Accesso bloccato dal filtro di sicurezza', 'error');
+                        } else {
+                            contentDiv.textContent = 'Errore: File non trovato nel percorso specificato.';
+                            this.logToConsole('❌ File non trovato', 'error');
+                        }
+                    } else {
+                        contentDiv.textContent = 'Errore: File non trovato nella directory pubblica.';
+                        this.logToConsole('❌ File non esistente', 'error');
+                    }
+                }
+            }
+
+            isBlockedPath(filePath) {
+                // Simulate some basic filtering (but still vulnerable)
+                const blockedPatterns = [
+                    /\.\.\/\.\.\/\.\.\/.*etc/,
+                    /\/bin\//,
+                    /\/usr\/bin\//
+                ];
+                
+                return blockedPatterns.some(pattern => pattern.test(filePath));
+            }
+
+            handleSensitiveFileAccess(filePath, content) {
+                if (filePath.includes('flag.txt')) {
+                    this.completeStep(4);
+                    this.completeChallenge();
+                    this.logToConsole('🏆 FLAG TROVATA! Challenge completata!', 'success');
+                } else if (filePath.includes('passwd')) {
+                    this.completeStep(4);
+                    this.completeChallenge();
+                    this.logToConsole('🎉 /etc/passwd acceduto! Challenge completata!', 'success');
+                }
+            }
+
+            loadFile(filename) {
+                document.getElementById('fileInput').value = filename;
+                this.readFile();
+            }
+
+            completeStep(stepNumber) {
+                if (stepNumber <= this.currentStep) return;
+                this.currentStep = stepNumber;
+                this.updateProgress();
+            }
+
+            completeChallenge() {
+                if (this.completed) return;
+                
+                this.completed = true;
+                this.logToConsole('🏆 CHALLENGE COMPLETATA! Directory Traversal eseguito con successo!', 'success');
+                
+                // Notify parent window
+                window.parent.postMessage({
+                    type: 'lab-completed',
+                    points: 150,
+                    timeSpent: this.getTimeSpent(),
+                    solutions: ['Directory Traversal vulnerability exploited']
+                }, '*');
+            }
+
+            updateProgress() {
+                const percentage = (this.currentStep / this.maxSteps) * 100;
+                document.getElementById('progressBar').style.width = percentage + '%';
+                document.getElementById('progressText').textContent = 
+                    Math.floor(percentage) + '% - Step ' + this.currentStep + '/' + this.maxSteps;
+            }
+
+            getTimeSpent() {
+                const elapsed = Date.now() - this.startTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                return minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+            }
+
+            logToConsole(message, type) {
+                type = type || 'info';
+                const console = document.getElementById('consoleOutput');
+                const timestamp = new Date().toLocaleTimeString();
+                const line = document.createElement('div');
+                line.className = 'console-line console-' + type;
+                line.textContent = '[' + timestamp + '] ' + message;
+                console.appendChild(line);
+                console.scrollTop = console.scrollHeight;
+            }
+
+            checkCurrentSolution() {
+                const filePath = document.getElementById('fileInput').value;
+                if (filePath.includes('passwd') || filePath.includes('flag.txt')) {
+                    this.logToConsole('✅ Soluzione corretta rilevata!', 'success');
+                    this.readFile();
+                } else {
+                    this.logToConsole('❌ Prova ad accedere a file sensibili come /etc/passwd o /flag.txt', 'error');
+                }
+            }
+        }
+
+        // Global functions
+        window.readFile = function() {
+            challenge.readFile();
+        };
+
+        window.testPayload = function() {
+            const payload = document.getElementById('payloadInput').value;
+            if (payload.trim()) {
+                document.getElementById('fileInput').value = payload;
+                challenge.readFile();
+            } else {
+                challenge.logToConsole('❌ Inserisci un path da testare', 'error');
+            }
+        };
+
+        window.selectPayload = function(element) {
+            const payload = element.textContent.trim();
+            document.getElementById('payloadInput').value = payload;
+            document.getElementById('fileInput').value = payload;
+            challenge.logToConsole('💡 Path selezionato: ' + payload, 'info');
+        };
+
+        window.loadFile = function(filename) {
+            challenge.loadFile(filename);
+        };
+
+        window.clearConsole = function() {
+            document.getElementById('consoleOutput').innerHTML = '';
+            challenge.logToConsole('🔄 Console pulita', 'info');
+        };
+
+        // Initialize challenge
+        let challenge;
+        document.addEventListener('DOMContentLoaded', function() {
+            challenge = new DirectoryTraversalChallenge();
+        });
+    </script>
+</body>
+</html>

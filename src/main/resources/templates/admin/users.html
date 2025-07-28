@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>User Management - CyberLab Admin</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- STOP ALL ANIMATIONS -->
+    <style>
+        *, *::before, *::after {
+            animation-duration: 0s !important;
+            animation-delay: 0s !important;
+            transition-duration: 0s !important;
+            transition-delay: 0s !important;
+        }
+
+        /* User-specific styles */
+        .users-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-container input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 45px 12px 15px;
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .search-container input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .search-container input::placeholder {
+            color: #888;
+        }
+
+        .search-container .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        .user-card {
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .user-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            margin: 0;
+        }
+
+        .user-email {
+            color: #ccc;
+            font-size: 14px;
+            margin: 2px 0;
+        }
+
+        .user-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .user-badges {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .role-badge.admin {
+            background: #dc3545;
+            color: white;
+        }
+
+        .role-badge.user {
+            background: #6c757d;
+            color: white;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-badge.active {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-badge.banned {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-badge.suspended {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .user-card-body {
+            border-top: 1px solid #404040;
+            padding-top: 15px;
+        }
+
+        .user-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-group {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-transform: uppercase;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .empty-state h3 {
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-content {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .loading-content i {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .user-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .user-badges {
+                margin-top: 10px;
+                align-self: flex-start;
+            }
+
+            .user-details {
+                grid-template-columns: 1fr;
+            }
+
+            .user-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-admin">
+        <div class="container">
+            <div class="navbar-content">
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab <span class="badge badge-admin">ADMIN</span>
+                </a>
+                
+                <ul class="navbar-nav">
+                    <li><a th:href="@{/}" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a th:href="@{/admin/users}" class="nav-link active"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-file-alt"></i> Posts</a></li>
+                    <li><a th:href="@{/admin/reports}" class="nav-link"><i class="fas fa-flag"></i> Reports</a></li>
+                    
+                    <!-- Admin User Menu -->
+                    <li class="user-menu">
+                        <div class="user-dropdown">
+                            <button class="user-btn admin-btn">
+                                <i class="fas fa-user-shield"></i>
+                                <span th:text="${#authentication.name}">Admin</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="admin-dashboard">
+        <div class="container">
+            <!-- Header -->
+            <div class="admin-header">
+                <h1><i class="fas fa-users"></i> User Management</h1>
+                <p>Manage system users and their permissions</p>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid admin-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <span class="stat-number" th:text="${totalUsers ?: 0}">0</span>
+                    <span class="stat-label">Total Users</span>
+                    <div class="stat-change">
+                        <i class="fas fa-chart-line"></i>
+                        <span>All registered</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <span class="stat-number" id="active-users-count">0</span>
+                    <span class="stat-label">Active Users</span>
+                    <div class="stat-change positive">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span>Currently active</span>
+                    </div>
+                </div>
+
+                <div class="stat-card alert-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-slash"></i>
+                    </div>
+                    <span class="stat-number" id="banned-users-count">0</span>
+                    <span class="stat-label">Banned Users</span>
+                    <div class="stat-change negative">
+                        <i class="fas fa-ban"></i>
+                        <span>Restricted access</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="admin-section">
+                <div class="users-header">
+                    <h2><i class="fas fa-search"></i> Search Users</h2>
+                    <span class="results-count" id="results-count" th:text="'Showing ' + ${#lists.size(users)} + ' users'">Showing 0 users</span>
+                </div>
+                <div class="search-container">
+                    <input type="text" id="user-search" placeholder="Search by username, email, or name..." 
+                           th:value="${searchTerm}" autocomplete="off">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+
+            <!-- Users List -->
+            <div class="admin-section">
+                <div id="users-container" th:if="${!#lists.isEmpty(users)}">
+                    <div class="user-card" th:each="user : ${users}">
+                        <!-- User Header -->
+                        <div class="user-card-header">
+                            <div class="user-avatar" th:if="${user.avatar == null or user.avatar.empty}">
+                                <span th:text="${user.username.substring(0,1).toUpperCase()}">U</span>
+                            </div>
+                            <img th:if="${user.avatar != null and !user.avatar.empty}" 
+                                 th:src="@{'/uploads/avatars/' + ${user.avatar}}" 
+                                 alt="Avatar" class="user-avatar">
+                            
+                            <div class="user-info">
+                                <h3 class="user-name" th:text="${user.username}">username</h3>
+                                <div class="user-email" th:text="${user.email}">user@example.com</div>
+                                <div class="user-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span th:text="'Joined ' + ${#temporals.format(user.joinDate, 'dd/MM/yyyy')}">Joined 01/01/2024</span>
+                                    </div>
+                                    <div class="meta-item" th:if="${user.name != null and user.surname != null}">
+                                        <i class="fas fa-user"></i>
+                                        <span th:text="${user.name + ' ' + user.surname}">Full Name</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="user-badges">
+                                <span class="role-badge" th:classappend="${user.role.name().toLowerCase()}"
+                                      th:text="${user.role.name()}">USER</span>
+                                <span class="status-badge" th:classappend="${user.status.name().toLowerCase()}"
+                                      th:text="${user.status.name()}">ACTIVE</span>
+                            </div>
+                        </div>
+
+                        <!-- User Details -->
+                        <div class="user-card-body">
+                            <div class="user-details">
+                                <div class="detail-group">
+                                    <div class="detail-label">User ID</div>
+                                    <div class="detail-value" th:text="'#' + ${user.id}">#123</div>
+                                </div>
+                                <div class="detail-group" th:if="${user.profileInfo != null and !user.profileInfo.empty}">
+                                    <div class="detail-label">Profile Info</div>
+                                    <div class="detail-value" th:text="${user.profileInfo}">User bio</div>
+                                </div>
+                                <div class="detail-group">
+                                    <div class="detail-label">Account Status</div>
+                                    <div class="detail-value">
+                                        <span th:if="${user.status.name() == 'ACTIVE'}" style="color: #28a745;">✓ Active Account</span>
+                                        <span th:if="${user.status.name() == 'BANNED'}" style="color: #dc3545;">⚠ Banned Account</span>
+                                        <span th:if="${user.status.name() == 'SUSPENDED'}" style="color: #ffc107;">⏸ Suspended Account</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="user-actions">
+                              
+                                
+                                <button th:if="${user.status.name() == 'ACTIVE'}"
+                                        class="btn btn-sm btn-danger" 
+                                        th:data-user-id="${user.id}"
+                                        th:data-username="${user.username}"
+                                        onclick="banUser(this.dataset.userId, this.dataset.username)">
+                                    <i class="fas fa-ban"></i> Ban User
+                                </button>
+                                
+                                <button th:if="${user.status.name() == 'BANNED'}"
+                                        class="btn btn-sm btn-success" 
+                                        th:data-user-id="${user.id}"
+                                        th:data-username="${user.username}"
+                                        onclick="unbanUser(this.dataset.userId, this.dataset.username)">
+                                    <i class="fas fa-check"></i> Unban User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(users)}" class="empty-state" id="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>No Users Found</h3>
+                    <p>No users match your search criteria.</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" th:if="${users != null and !users.empty}" id="pagination">
+                <a th:href="@{/admin/users(page=${currentPage - 1}, search=${searchTerm})}"
+                   class="btn" th:classappend="${!hasPrevious ? 'disabled' : ''}"
+                   th:if="${hasPrevious}">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+                
+                <span class="btn disabled">Page <span th:text="${currentPage + 1}">1</span></span>
+                
+                <a th:href="@{/admin/users(page=${currentPage + 1}, search=${searchTerm})}"
+                   class="btn" th:classappend="${!hasNext ? 'disabled' : ''}"
+                   th:if="${hasNext}">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h3>Searching users...</h3>
+            <p>Please wait while we search for users.</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        let searchTimeout;
+        const searchInput = document.getElementById('user-search');
+        const usersContainer = document.getElementById('users-container');
+        const emptyState = document.getElementById('empty-state');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const resultsCount = document.getElementById('results-count');
+        const pagination = document.getElementById('pagination');
+
+        // Update counters on page load
+        updateCounters();
+
+        // Real-time search
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            searchTimeout = setTimeout(() => {
+                if (query.length >= 2 || query.length === 0) {
+                    performSearch(query);
+                }
+            }, 300);
+        });
+
+        function performSearch(query) {
+            showLoading();
+            
+            const url = `/admin/users/search?q=${encodeURIComponent(query)}`;
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                displayUsers(data.users);
+                updateResultsCount(data.users.length);
+                updateCounters();
+                
+                if (pagination) {
+                    pagination.style.display = query ? 'none' : 'flex';
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showNotification('Error searching users', 'error');
+                console.error('Search error:', error);
+            });
+        }
+
+        function showLoading() {
+            loadingOverlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+        }
+
+        function displayUsers(users) {
+            if (users.length === 0) {
+                if (usersContainer) usersContainer.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'block';
+                return;
+            }
+
+            if (emptyState) emptyState.style.display = 'none';
+            
+            const usersHTML = users.map(user => `
+                <div class="user-card">
+                    <div class="user-card-header">
+                        <div class="user-avatar">
+                            <span>${user.username.charAt(0).toUpperCase()}</span>
+                        </div>
+                        
+                        <div class="user-info">
+                            <h3 class="user-name">${user.username}</h3>
+                            <div class="user-email">${user.email}</div>
+                            <div class="user-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Joined ${formatDate(user.joinDate)}</span>
+                                </div>
+                                ${user.name && user.surname ? `
+                                <div class="meta-item">
+                                    <i class="fas fa-user"></i>
+                                    <span>${user.name} ${user.surname}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <div class="user-badges">
+                            <span class="role-badge ${user.role.toLowerCase()}">${user.role}</span>
+                            <span class="status-badge ${user.status.toLowerCase()}">${user.status}</span>
+                        </div>
+                    </div>
+
+                    <div class="user-card-body">
+                        <div class="user-details">
+                            <div class="detail-group">
+                                <div class="detail-label">User ID</div>
+                                <div class="detail-value">#${user.id}</div>
+                            </div>
+                            ${user.profileInfo ? `
+                            <div class="detail-group">
+                                <div class="detail-label">Profile Info</div>
+                                <div class="detail-value">${user.profileInfo}</div>
+                            </div>
+                            ` : ''}
+                            <div class="detail-group">
+                                <div class="detail-label">Account Status</div>
+                                <div class="detail-value">
+                                    ${user.status === 'ACTIVE' ? '<span style="color: #28a745;">✓ Active Account</span>' :
+                                      user.status === 'BANNED' ? '<span style="color: #dc3545;">⚠ Banned Account</span>' :
+                                      '<span style="color: #ffc107;">⏸ Suspended Account</span>'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="user-actions">
+                            <button class="btn btn-sm btn-info" onclick="viewUserProfile('${user.username}')">
+                                <i class="fas fa-eye"></i> View Profile
+                            </button>
+                            
+                            ${user.status === 'ACTIVE' ? `
+                                <button class="btn btn-sm btn-danger" onclick="banUser(${user.id}, '${user.username}')">
+                                    <i class="fas fa-ban"></i> Ban User
+                                </button>
+                            ` : `
+                                <button class="btn btn-sm btn-success" onclick="unbanUser(${user.id}, '${user.username}')">
+                                    <i class="fas fa-check"></i> Unban User
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            if (usersContainer) {
+                usersContainer.innerHTML = usersHTML;
+                usersContainer.style.display = 'block';
+            }
+        }
+
+        function updateResultsCount(count) {
+            if (resultsCount) {
+                resultsCount.textContent = `Showing ${count} users`;
+            }
+        }
+
+        function updateCounters() {
+            const userCards = document.querySelectorAll('.user-card');
+            let activeCount = 0;
+            let bannedCount = 0;
+
+            userCards.forEach(card => {
+                const statusBadge = card.querySelector('.status-badge');
+                if (statusBadge) {
+                    const status = statusBadge.textContent.trim();
+                    if (status === 'ACTIVE') activeCount++;
+                    else if (status === 'BANNED') bannedCount++;
+                }
+            });
+
+            const activeElement = document.getElementById('active-users-count');
+            const bannedElement = document.getElementById('banned-users-count');
+            
+            if (activeElement) activeElement.textContent = activeCount;
+            if (bannedElement) bannedElement.textContent = bannedCount;
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-GB');
+        }
+
+        function viewUserProfile(username) {
+            showNotification(`Viewing profile for ${username} - Public profile feature not yet implemented`, 'info');
+        }
+
+        function banUser(userId, username) {
+            if (confirm(`Are you sure you want to ban user "${username}"?`)) {
+                showLoading();
+                
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                
+                fetch(`/admin/users/${userId}/ban`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        showNotification(`User "${username}" has been banned`, 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showNotification(`Error: ${data.message}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    showNotification('Error banning user', 'error');
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        function unbanUser(userId, username) {
+            if (confirm(`Are you sure you want to unban user "${username}"?`)) {
+                showLoading();
+                
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                
+                fetch(`/admin/users/${userId}/unban`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        showNotification(`User "${username}" has been unbanned`, 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showNotification(`Error: ${data.message}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    showNotification('Error unbanning user', 'error');
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = 'notification ' + type;
+            notification.textContent = message;
+            notification.style.cssText = 
+                'position: fixed; top: 20px; right: 20px; padding: 15px; border-radius: 5px; color: white; z-index: 1000; background-color: ' + 
+                (type === 'success' ? '#28a745' : type === 'info' ? '#17a2b8' : '#dc3545') + '; box-shadow: 0 4px 8px rgba(0,0,0,0.3);';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

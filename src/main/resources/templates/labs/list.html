@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberLabs - Laboratori Interattivi</title>
+    
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Custom styles for labs page using dashboard theme */
+        .labs-container {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Matrix Background Effect */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .matrix-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 65, 0.05), transparent);
+            animation: matrix-flow 15s linear infinite;
+        }
+
+        @keyframes matrix-flow {
+            0% { transform: translateX(-100%) rotate(0deg); }
+            100% { transform: translateX(100%) rotate(360deg); }
+        }
+
+        /* Labs Header */
+        .labs-header {
+            padding: 180px 0 60px;
+            position: relative;
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 255, 255, 0.1) 100%);
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+        }
+
+        .labs-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,255,65,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(10px, 10px); }
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-text h1 {
+            font-size: 3.5rem;
+            color: #00ff41;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-text h1 i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .hero-subtitle {
+            display: block;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin: 1.5rem 0;
+            max-width: 500px;
+        }
+
+        /* Progress Circle */
+        .progress-circle {
+            text-align: center;
+            position: relative;
+        }
+
+        .circular-chart {
+            display: block;
+            margin: 0 auto;
+            max-width: 150px;
+            max-height: 150px;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 2.8;
+        }
+
+        .circle {
+            fill: none;
+            stroke: #00ff41;
+            stroke-width: 2.8;
+            stroke-linecap: round;
+            animation: progress 2s ease-in-out;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 65, 0.5));
+        }
+
+        .percentage {
+            fill: #00ff41;
+            font-size: 0.5em;
+            text-anchor: middle;
+            font-weight: bold;
+        }
+
+        .progress-circle p {
+            margin-top: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        @keyframes progress {
+            0% { stroke-dasharray: 0 100; }
+        }
+
+        /* Labs Grid Section */
+        .labs-grid-section {
+            padding: 50px 0 80px;
+        }
+
+        .section-title {
+            color: #00ff41;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .labs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Enhanced Lab Card */
+        .lab-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .lab-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(0, 255, 65, 0.1) 50%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .lab-card:hover::before {
+            opacity: 1;
+        }
+
+        .lab-card:hover {
+            transform: translateY(-15px);
+            border-color: #00ff41;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 0 40px rgba(0, 255, 65, 0.2);
+        }
+
+        /* Lab Status Badge */
+        .lab-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            z-index: 3;
+            border: 2px solid transparent;
+        }
+
+        .lab-status.completed {
+            background: linear-gradient(135deg, #00ff41, #00cc33);
+            color: white;
+            animation: pulse-success 2s infinite;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .lab-status.in_progress {
+            background: linear-gradient(135deg, #ffa500, #ff8c00);
+            color: white;
+            animation: pulse-warning 2s infinite;
+        }
+
+        .lab-status.not_started {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.6);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes pulse-success {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); }
+        }
+
+        @keyframes pulse-warning {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 165, 0, 0); }
+        }
+
+        /* Lab Header */
+        .lab-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+
+        .lab-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lab-icon.xss {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .lab-icon.sql {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .lab-icon.traversal {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .lab-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .category-tag {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .difficulty-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid;
+        }
+
+        .difficulty-badge.INTERMEDIATE {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+            border-color: rgba(255, 165, 0, 0.3);
+        }
+
+        .difficulty-badge.ADVANCED {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4444;
+            border-color: rgba(255, 0, 0, 0.3);
+        }
+
+        /* Lab Content */
+        .lab-content h3 {
+            color: white;
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .lab-content p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        /* Progress Container */
+        .progress-container {
+            margin-bottom: 25px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .progress-label span:first-child {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .progress-percentage {
+            color: #00ff41;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41, #00ffff);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Lab Stats */
+        .lab-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 25px 0;
+            padding: 20px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .lab-stats .stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .lab-stats .stat i {
+            color: #00ff41;
+            font-size: 1.1rem;
+        }
+
+        /* Lab Actions */
+        .lab-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 25px;
+            justify-content: center; /* Center the button since there's only one */
+        }
+
+        .lab-btn {
+            width: 100%; /* Full width since no favorite button */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px 25px;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #00ff41, #00cc33);
+            color: #000;
+            border: 1px solid #00ff41;
+        }
+
+        .lab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .lab-btn:hover::before {
+            left: 100%;
+        }
+
+        .lab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 65, 0.4);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .labs-grid {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .labs-container {
+                padding-top: 70px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 30px;
+            }
+            
+            .header-text h1 {
+                font-size: 2.5rem;
+            }
+            
+            .labs-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .lab-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .labs-header {
+                padding: 100px 0 40px;
+            }
+            
+            .header-text h1 {
+                font-size: 2rem;
+            }
+            
+            .lab-card {
+                padding: 20px;
+            }
+            
+            .lab-header {
+                align-items: center;
+            }
+            
+            .lab-meta {
+                align-items: center;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg"></div>
+    
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab
+                </a>
+                
+                <ul class="navbar-nav">
+                    <li><a th:href="@{/}" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a th:href="@{/labs}" class="nav-link active"><i class="fas fa-flask"></i> Labs</a></li>
+                    <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-code"></i> Community</a></li>
+                    <li><a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    
+                    <li class="user-menu" sec:authorize="isAuthenticated()">
+                        <div class="user-dropdown">
+                            <button class="user-btn">
+                                <i class="fas fa-user"></i>
+                                <span th:text="${#authentication.name}">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a th:href="@{/profile}"><i class="fas fa-user-circle"></i> Profile</a>
+                                
+                                <hr>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                    
+                    <li sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/login}" class="nav-link">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <main class="labs-container">
+        <section class="labs-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1>
+                            <i class="fas fa-flask"></i> CyberLabs
+                        </h1>
+                        <p class="hero-subtitle">Interactive Cybersecurity Training</p>
+                        <p class="hero-description">
+                            Learn cybersecurity through practical and interactive laboratories designed 
+                            to simulate real penetration testing and ethical hacking scenarios.
+                        </p>
+                    </div>
+                    <div class="header-visual" sec:authorize="isAuthenticated()">
+                      
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="labs-grid-section">
+            <div class="container">
+                <h2 class="section-title">
+                    <i class="fas fa-flask"></i> Available Laboratories
+                </h2>
+                
+                <div class="labs-grid">
+                    <div class="lab-card">
+                        <div class="lab-status not_started" th:with="progress=${userProgress != null ? userProgress[1] : null}" 
+                             th:classappend="${progress?.status?.name()?.toLowerCase() ?: 'not_started'}">
+                            <i class="fas fa-check-circle" th:if="${progress?.status?.name() == 'COMPLETED'}"></i>
+                            <i class="fas fa-play-circle" th:if="${progress?.status?.name() == 'IN_PROGRESS'}"></i>
+                            <i class="fas fa-lock" th:if="${progress == null or progress.status?.name() == 'NOT_STARTED'}"></i>
+                        </div>
+
+                        <div class="lab-header">
+                            <div class="lab-icon xss">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <div class="lab-meta">
+                                <span class="category-tag">Web Security</span>
+                                <span class="difficulty-badge INTERMEDIATE">INTERMEDIATE</span>
+                            </div>
+                        </div>
+
+                        <div class="lab-content">
+                            <h3>Cross-Site Scripting (XSS)</h3>
+                            <p>Learn to identify and exploit XSS vulnerabilities in web applications. Discover Reflected XSS techniques and how to bypass security filters.</p>
+                            
+                            <div class="progress-container" th:with="progress=${userProgress != null ? userProgress[1] : null}" th:if="${progress != null}">
+                                <div class="progress-label">
+                                    <span>Progress</span>
+                                    <span class="progress-percentage" th:text="${progress.completionPercentage} + '%'">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" th:style="'width: ' + ${progress.completionPercentage} + '%'"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="lab-stats">
+                                <div class="stat">
+                                    <i class="fas fa-clock"></i>
+                                    <span>30-45 min</span>
+                                </div>
+                                
+                            </div>
+                        </div>
+
+                        <div class="lab-actions">
+                            <a href="/labs/xss" class="lab-btn">
+                                <i class="fas fa-rocket"></i>
+                                <span>Start Lab</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="lab-card">
+                        <div class="lab-status not_started" th:with="progress=${userProgress != null ? userProgress[2] : null}" 
+                             th:classappend="${progress?.status?.name()?.toLowerCase() ?: 'not_started'}">
+                            <i class="fas fa-check-circle" th:if="${progress?.status?.name() == 'COMPLETED'}"></i>
+                            <i class="fas fa-play-circle" th:if="${progress?.status?.name() == 'IN_PROGRESS'}"></i>
+                            <i class="fas fa-lock" th:if="${progress == null or progress.status?.name() == 'NOT_STARTED'}"></i>
+                        </div>
+
+                        <div class="lab-header">
+                            <div class="lab-icon sql">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="lab-meta">
+                                <span class="category-tag">Web Security</span>
+                                <span class="difficulty-badge INTERMEDIATE">INTERMEDIATE</span>
+                            </div>
+                        </div>
+
+                        <div class="lab-content">
+                            <h3>SQL Injection</h3>
+                            <p>Discover how to exploit SQL Injection vulnerabilities to bypass authentication and access sensitive data in databases.</p>
+                            
+                            <div class="progress-container" th:with="progress=${userProgress != null ? userProgress[2] : null}" th:if="${progress != null}">
+                                <div class="progress-label">
+                                    <span>Progress</span>
+                                    <span class="progress-percentage" th:text="${progress.completionPercentage} + '%'">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" th:style="'width: ' + ${progress.completionPercentage} + '%'"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="lab-stats">
+                                <div class="stat">
+                                    <i class="fas fa-clock"></i>
+                                    <span>45-60 min</span>
+                                </div>
+                               
+                            </div>
+                        </div>
+
+                        <div class="lab-actions">
+                            <a href="/labs/sqli" class="lab-btn">
+                                <i class="fas fa-rocket"></i>
+                                <span>Start Lab</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="lab-card">
+                        <div class="lab-status not_started" th:with="progress=${userProgress != null ? userProgress[3] : null}" 
+                             th:classappend="${progress?.status?.name()?.toLowerCase() ?: 'not_started'}">
+                            <i class="fas fa-check-circle" th:if="${progress?.status?.name() == 'COMPLETED'}"></i>
+                            <i class="fas fa-play-circle" th:if="${progress?.status?.name() == 'IN_PROGRESS'}"></i>
+                            <i class="fas fa-lock" th:if="${progress == null or progress.status?.name() == 'NOT_STARTED'}"></i>
+                        </div>
+
+                                                    <div class="lab-header">
+                            <div class="lab-icon traversal">
+                                <i class="fas fa-folder-open"></i>
+                            </div>
+                            <div class="lab-meta">
+                                <span class="category-tag">Web Security</span>
+                                <span class="difficulty-badge ADVANCED">ADVANCED</span>
+                            </div>
+                        </div>
+
+                        <div class="lab-content">
+                            <h3>Directory Traversal</h3>
+                            <p>Learn to exploit path traversal vulnerabilities to access sensitive system files outside the authorized web directory.</p>
+                            
+                            <div class="progress-container" th:with="progress=${userProgress != null ? userProgress[3] : null}" th:if="${progress != null}">
+                                <div class="progress-label">
+                                    <span>Progress</span>
+                                    <span class="progress-percentage" th:text="${progress.completionPercentage} + '%'">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" th:style="'width: ' + ${progress.completionPercentage} + '%'"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="lab-stats">
+                                <div class="stat">
+                                    <i class="fas fa-clock"></i>
+                                    <span>35-50 min</span>
+                                </div>
+                                
+                            </div>
+                        </div>
+
+                        <div class="lab-actions">
+                            <a href="/labs/traversal" class="lab-btn">
+                                <i class="fas fa-rocket"></i>
+                                <span>Start Lab</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-start-section" style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(26, 26, 46, 0.3)); padding: 60px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 50px; border-radius: 20px;">
+                    <div class="quick-start-content" style="text-align: center; max-width: 1000px; margin: 0 auto;">
+                        <h2 style="color: #00ff41; font-size: 2.5rem; margin-bottom: 15px;">
+                            <i class="fas fa-rocket"></i> Start your Journey
+                        </h2>
+                        <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                            Choose your preferred laboratory and start learning ethical hacking techniques through practical and interactive exercises.
+                        </p>
+                        
+                        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px;">
+                            <div style="background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 15px; padding: 20px; min-width: 200px;">
+                                <i class="fas fa-code" style="font-size: 2rem; color: #e74c3c; margin-bottom: 10px;"></i>
+                                <h4 style="color: white; margin-bottom: 5px;">XSS</h4>
+                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Client-side Attacks</p>
+                            </div>
+                            
+                            <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid rgba(243, 156, 18, 0.3); border-radius: 15px; padding: 20px; min-width: 200px;">
+                                <i class="fas fa-database" style="font-size: 2rem; color: #f39c12; margin-bottom: 10px;"></i>
+                                <h4 style="color: white; margin-bottom: 5px;">SQL Injection</h4>
+                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Database Attacks</p>
+                            </div>
+                            
+                            <div style="background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.3); border-radius: 15px; padding: 20px; min-width: 200px;">
+                                <i class="fas fa-folder-open" style="font-size: 2rem; color: #3498db; margin-bottom: 10px;"></i>
+                                <h4 style="color: white; margin-bottom: 5px;">Path Traversal</h4>
+                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">File System Access</p>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0, 255, 65, 0.1); border: 1px solid rgba(0, 255, 65, 0.3); border-radius: 15px; padding: 30px; margin-top: 30px;">
+                            <h3 style="color: #00ff41; margin-bottom: 15px;">
+                                <i class="fas fa-info-circle"></i> How it works
+                            </h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; text-align: left;">
+                                <div>
+                                    <h4 style="color: white; margin-bottom: 10px;">
+                                        <span style="background: #00ff41; color: #000; width: 25px; height: 25px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.9rem;">1</span>
+                                        Choose a Lab
+                                    </h4>
+                                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Select the laboratory you want to complete based on your skills.</p>
+                                </div>
+                                
+                                <div>
+                                    <h4 style="color: white; margin-bottom: 10px;">
+                                        <span style="background: #00ff41; color: #000; width: 25px; height: 25px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.9rem;">2</span>
+                                        Practice & Learn
+                                    </h4>
+                                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Follow the instructions and experiment with payloads to complete the challenges.</p>
+                                </div>
+                                
+                                <div>
+                                    <h4 style="color: white; margin-bottom: 10px;">
+                                        <span style="background: #00ff41; color: #000; width: 25px; height: 25px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.9rem;">3</span>
+                                        Earn Points
+                                    </h4>
+                                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Complete laboratories to earn points and unlock new challenges.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Enhanced card hover effects
+        document.querySelectorAll('.lab-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                // Add subtle glow effect to icon
+                const icon = this.querySelector('.lab-icon');
+                if (icon) {
+                    icon.style.transform = 'scale(1.05)';
+                    icon.style.filter = 'brightness(1.2)';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                const icon = this.querySelector('.lab-icon');
+                if (icon) {
+                    icon.style.transform = 'scale(1)';
+                    icon.style.filter = 'brightness(1)';
+                }
+            });
+        });
+
+        // Navbar dropdown functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const userDropdown = document.querySelector('.user-dropdown');
+            if (userDropdown) {
+                const userBtn = userDropdown.querySelector('.user-btn');
+                const dropdownContent = userDropdown.querySelector('.dropdown-content');
+
+                userBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownContent.style.display = dropdownContent.style.display === 'block' ? 'none' : 'block';
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function() {
+                    dropdownContent.style.display = 'none';
+                });
+
+                dropdownContent.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+
+        // Animated counters for stats (if needed)
+        function animateCounter(element, target, duration = 2000) {
+            let start = 0;
+            const increment = target / (duration / 16);
+            
+            function update() {
+                start += increment;
+                if (start < target) {
+                    element.textContent = Math.floor(start);
+                    requestAnimationFrame(update);
+                } else {
+                    element.textContent = target;
+                }
+            }
+            
+            update();
+        }
+
+        // Initialize animations when page loads
+        window.addEventListener('load', function() {
+            // Animate progress circle if present
+            const progressCircle = document.querySelector('.circle');
+            if (progressCircle) {
+                progressCircle.style.animation = 'progress 2s ease-in-out';
+            }
+            
+            // Add stagger animation to lab cards
+            const labCards = document.querySelectorAll('.lab-card');
+            labCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

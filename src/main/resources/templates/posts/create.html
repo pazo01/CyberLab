@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Post - CyberLab Forum</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/posts.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab
+                </a>
+                
+                <ul class="navbar-nav">
+                    <li><a th:href="@{/}" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a th:href="@{/labs}" class="nav-link"><i class="fas fa-flask"></i> Labs</a></li>
+                    <li><a th:href="@{/posts}" class="nav-link active"><i class="fas fa-code"></i> Community</a></li>
+                    <li><a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    
+                    <!-- User Menu -->
+                    <li class="user-menu">
+                        <div class="user-dropdown">
+                            <button class="user-btn">
+                                <i class="fas fa-user"></i>
+                                <span th:text="${#authentication.name}">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a th:href="@{/profile}"><i class="fas fa-user-circle"></i> Profile</a>
+                                <hr>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Create Post Container -->
+    <div class="create-post-container">
+        <div class="container">
+            <!-- Breadcrumb -->
+            <nav class="breadcrumb">
+                <a th:href="@{/}" class="breadcrumb-item">Home</a>
+                <a th:href="@{/posts}" class="breadcrumb-item">Forum</a>
+                <span class="breadcrumb-item active">Create Post</span>
+            </nav>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1><i class="fas fa-pen"></i> Create New Post</h1>
+                <p>Share your knowledge, ask questions, or start a discussion</p>
+            </div>
+
+            <!-- Error Messages - FIXED -->
+            <div th:if="${error}" class="alert alert-danger">
+                <span th:text="${error}">Error message</span>
+            </div>
+
+            <!-- Create Form -->
+            <div class="create-form-wrapper">
+                <form th:action="@{/posts/create}" th:object="${post}" method="post" class="post-form">
+                    
+                    <!-- Global Form Errors (if any) - FIXED -->
+                    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+                        <ul>
+                            <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">Global error</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <!-- Left Column -->
+                        <div class="form-main">
+                            <!-- Post Type -->
+                            <div class="form-group">
+                                <label class="form-label">Post Type <span class="required">*</span></label>
+                                <div class="post-type-selector">
+                                    <label class="type-option">
+                                        <input type="radio" th:field="*{postType}" value="GENERAL">
+                                        <div class="type-card">
+                                            <i class="fas fa-comments"></i>
+                                            <span>General</span>
+                                            <small>General discussion</small>
+                                        </div>
+                                    </label>
+                                    <label class="type-option">
+                                        <input type="radio" th:field="*{postType}" value="SCRIPT">
+                                        <div class="type-card">
+                                            <i class="fas fa-code"></i>
+                                            <span>Script</span>
+                                            <small>Attack Script</small>
+                                        </div>
+                                    </label>
+                                    <label class="type-option">
+                                        <input type="radio" th:field="*{postType}" value="TOOL">
+                                        <div class="type-card">
+                                            <i class="fas fa-wrench"></i>
+                                            <span>Tool</span>
+                                            <small>Security Tool</small>
+                                        </div>
+                                    </label>
+                                    <label class="type-option">
+                                        <input type="radio" th:field="*{postType}" value="TUTORIAL">
+                                        <div class="type-card">
+                                            <i class="fas fa-book"></i>
+                                            <span>Tutorial</span>
+                                            <small>How-to Guide</small>
+                                        </div>
+                                    </label>
+                                    <label class="type-option">
+                                        <input type="radio" th:field="*{postType}" value="WRITEUP">
+                                        <div class="type-card">
+                                            <i class="fas fa-flag"></i>
+                                            <span>Writeup</span>
+                                            <small>CTF Writeup</small>
+                                        </div>
+                                    </label>
+                                    <label class="type-option">
+                                        <input type="radio" th:field="*{postType}" value="NEWS">
+                                        <div class="type-card">
+                                            <i class="fas fa-newspaper"></i>
+                                            <span>News</span>
+                                            <small>Security News</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div th:if="${#fields.hasErrors('postType')}" class="error-message">
+                                    <span th:errors="*{postType}">PostType error</span>
+                                </div>
+                            </div>
+
+                            <!-- Title -->
+                            <div class="form-group">
+                                <label class="form-label" for="title">Title <span class="required">*</span></label>
+                                <input type="text" th:field="*{title}" id="title" class="form-input" 
+                                       placeholder="Enter a descriptive title..." 
+                                       maxlength="200">
+                                <small class="form-help">
+                                    <span id="titleCount">0</span>/200 characters
+                                </small>
+                                <div th:if="${#fields.hasErrors('title')}" class="error-message">
+                                    <span th:errors="*{title}">Title error</span>
+                                </div>
+                            </div>
+
+                            <!-- Content Editor -->
+                            <div class="form-group">
+                                <label class="form-label" for="content">Content <span class="required">*</span></label>
+                                <div class="editor-toolbar">
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('**', '**')" title="Bold">
+                                        <i class="fas fa-bold"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('*', '*')" title="Italic">
+                                        <i class="fas fa-italic"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('```\n', '\n```')" title="Code Block">
+                                        <i class="fas fa-code"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('[', '](url)')" title="Link">
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('- ', '')" title="List">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('> ', '')" title="Quote">
+                                        <i class="fas fa-quote-right"></i>
+                                    </button>
+                                    <div class="editor-separator"></div>
+                                    <button type="button" class="editor-btn" onclick="togglePreview()" title="Preview">
+                                        <i class="fas fa-eye"></i> Preview
+                                    </button>
+                                </div>
+                                <div class="editor-container">
+                                    <textarea th:field="*{content}" id="content" class="form-input editor-textarea" 
+                                              placeholder="Write your post content here. Markdown is supported..." 
+                                              rows="15"></textarea>
+                                    <div id="preview" class="editor-preview" style="display: none;"></div>
+                                </div>
+                                <small class="form-help">
+                                    Supports Markdown formatting. Use code blocks for scripts.
+                                </small>
+                                <div th:if="${#fields.hasErrors('content')}" class="error-message">
+                                    <span th:errors="*{content}">Content error</span>
+                                </div>
+                            </div>
+
+                            <!-- Tags -->
+                            <div class="form-group">
+                                <label class="form-label" for="tags">Tags</label>
+                                <input type="text" th:field="*{tags}" id="tags" class="form-input" 
+                                       placeholder="Enter tags separated by commas (e.g., xss, javascript, security)">
+                                <small class="form-help">Add up to 5 tags to help others find your post</small>
+                                <div id="tagsList" class="tags-display"></div>
+                                <div th:if="${#fields.hasErrors('tags')}" class="error-message">
+                                    <span th:errors="*{tags}">Tags error</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="form-sidebar">
+                            <!-- Category -->
+                            <div class="form-group">
+                                <label class="form-label" for="categoryId">Category <span class="required">*</span></label>
+                                <select th:field="*{categoryId}" id="categoryId" class="form-input">
+                                    <option value="">Select a category</option>
+                                    <option th:each="category : ${categories}" 
+                                            th:value="${category.id}" 
+                                            th:text="${category.name}">Category</option>
+                                </select>
+                                <div th:if="${#fields.hasErrors('categoryId')}" class="error-message">
+                                    <span th:errors="*{categoryId}">Category error</span>
+                                </div>
+                            </div>
+
+                            <!-- Posting Guidelines -->
+                            <div class="guidelines-card">
+                                <h3><i class="fas fa-info-circle"></i> Posting Guidelines</h3>
+                                <ul>
+                                    <li>Be respectful and constructive</li>
+                                    <li>Use descriptive titles</li>
+                                    <li>Format code with code blocks</li>
+                                    <li>Search before posting duplicates</li>
+                                    <li>No illegal or malicious content</li>
+                                    <li>Tag appropriately</li>
+                                </ul>
+                            </div>
+
+                            <!-- Formatting Help -->
+                            <div class="formatting-help">
+                                <h3><i class="fas fa-markdown"></i> Markdown Help</h3>
+                                <div class="help-item">
+                                    <code>**bold**</code> → <strong>bold</strong>
+                                </div>
+                                <div class="help-item">
+                                    <code>*italic*</code> → <em>italic</em>
+                                </div>
+                                <div class="help-item">
+                                    <code>`code`</code> → <code>code</code>
+                                </div>
+                                <div class="help-item">
+                                    <code>[link](url)</code> → <a href="#">link</a>
+                                </div>
+                                <div class="help-item">
+                                    <code>```lang<br>code block<br>```</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Publish Post
+                        </button>
+                       
+                        <a th:href="@{/posts}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Title character counter
+        document.getElementById('title').addEventListener('input', function() {
+            document.getElementById('titleCount').textContent = this.value.length;
+        });
+
+        // Simple markdown functions
+        function insertMarkdown(before, after) {
+            const textarea = document.getElementById('content');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            const replacement = before + selectedText + after;
+            
+            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+            textarea.focus();
+            textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length);
+        }
+
+        function togglePreview() {
+            const textarea = document.getElementById('content');
+            const preview = document.getElementById('preview');
+            
+            if (preview.style.display === 'none') {
+                preview.style.display = 'block';
+                textarea.style.display = 'none';
+                preview.innerHTML = '<p>Preview: ' + textarea.value.replace(/\n/g, '<br>') + '</p>';
+            } else {
+                preview.style.display = 'none';
+                textarea.style.display = 'block';
+            }
+        }
+
+        function saveDraft() {
+            // Simple localStorage save
+            const formData = {
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value,
+                tags: document.getElementById('tags').value,
+                categoryId: document.getElementById('categoryId').value
+            };
+            localStorage.setItem('postDraft', JSON.stringify(formData));
+            alert('Draft saved locally!');
+        }
+
+        // Load draft on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('postDraft');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (confirm('Load saved draft?')) {
+                    document.getElementById('title').value = data.title || '';
+                    document.getElementById('content').value = data.content || '';
+                    document.getElementById('tags').value = data.tags || '';
+                    document.getElementById('categoryId').value = data.categoryId || '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

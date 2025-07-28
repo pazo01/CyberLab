@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Injection Challenge - CyberLab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Matrix Background */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .matrix-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(139, 69, 19, 0.1), transparent);
+            animation: matrix-flow 20s linear infinite;
+        }
+
+        @keyframes matrix-flow {
+            0% { transform: translateY(-100%) rotate(0deg); }
+            100% { transform: translateY(100%) rotate(360deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Enhanced Header */
+        .header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(139, 69, 19, 0.5);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #8b4513, #daa520, #ff6347);
+            animation: database-glow 3s linear infinite;
+        }
+
+        @keyframes database-glow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .challenge-title {
+            font-size: 1.8rem;
+            color: #daa520;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(218, 165, 32, 0.5);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .challenge-title::before {
+            content: '🛢️';
+            font-size: 1.6rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .objective {
+            background: linear-gradient(135deg, rgba(139, 69, 19, 0.2), rgba(218, 165, 32, 0.1));
+            border: 1px solid rgba(139, 69, 19, 0.4);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .objective::before {
+            content: '🎯';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid rgba(139, 69, 19, 0.4);
+        }
+
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            min-height: 0;
+            height: calc(100vh - 200px);
+        }
+
+        /* Enhanced Vulnerable App */
+        .vulnerable-app {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vulnerable-app:hover {
+            border-color: rgba(218, 165, 32, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(218, 165, 32, 0.2);
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #8e44ad, #9b59b6);
+            color: white;
+            padding: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .app-header::before {
+            content: '🔐';
+            font-size: 1.2rem;
+            animation: lock-blink 3s infinite;
+        }
+
+        @keyframes lock-blink {
+            0%, 80% { opacity: 1; }
+            90% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .app-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        /* Enhanced Login Form */
+        .login-form {
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.1), rgba(155, 89, 182, 0.1));
+            border: 1px solid rgba(142, 68, 173, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .login-form h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-form h3::before {
+            content: '🔑';
+            font-size: 1.2rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #daa520;
+            box-shadow: 0 0 20px rgba(218, 165, 32, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #daa520, #b8860b);
+            color: #000;
+            border: 1px solid #daa520;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(218, 165, 32, 0.4);
+        }
+
+        /* Enhanced SQL Query Display */
+        .sql-query-display {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(218, 165, 32, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            overflow-x: auto;
+        }
+
+        .sql-keyword {
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .sql-string {
+            color: #2ecc71;
+        }
+
+        .sql-comment {
+            color: #95a5a6;
+        }
+
+        /* Enhanced Results Display */
+        #loginResults {
+            margin-top: 20px;
+        }
+
+        #loginResults p {
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .result-success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .result-error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .users-table th {
+            background: rgba(218, 165, 32, 0.2);
+            font-weight: 600;
+            color: #daa520;
+        }
+
+        .admin-row {
+            background: rgba(231, 76, 60, 0.1);
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        /* Enhanced Control Panel */
+        .control-panel {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .panel-header::before {
+            content: '⚡';
+            font-size: 1.2rem;
+            animation: pulse 2s infinite;
+        }
+
+        .panel-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        /* Enhanced Progress Section */
+        .progress-section {
+            background: linear-gradient(135deg, rgba(218, 165, 32, 0.1), rgba(139, 69, 19, 0.1));
+            border: 1px solid rgba(218, 165, 32, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .progress-section h4 {
+            color: #daa520;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-section h4::before {
+            content: '📊';
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #daa520, #8b4513);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            width: 0%;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #daa520;
+            font-weight: 600;
+        }
+
+        /* Enhanced Challenge Section */
+        .challenge-section {
+            margin-bottom: 25px;
+        }
+
+        .challenge-section h4 {
+            color: #fff;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #daa520;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .payload-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            resize: vertical;
+            min-height: 100px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #daa520;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .payload-input:focus {
+            outline: none;
+            border-color: #daa520;
+            box-shadow: 0 0 20px rgba(218, 165, 32, 0.3);
+        }
+
+        .payload-input::placeholder {
+            color: rgba(218, 165, 32, 0.6);
+        }
+
+        /* Enhanced Payload Suggestions */
+        .payload-suggestions {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(218, 165, 32, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .payload-suggestions h5 {
+            margin-bottom: 15px;
+            color: #daa520;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payload-suggestions h5::before {
+            content: '💡';
+            font-size: 1rem;
+        }
+
+        .payload-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #f39c12;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payload-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .payload-item:hover::before {
+            left: 100%;
+        }
+
+        .payload-item:hover {
+            background: rgba(218, 165, 32, 0.1);
+            border-color: #daa520;
+            transform: translateX(5px);
+        }
+
+        /* Enhanced Database Schema */
+        .schema-section {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(218, 165, 32, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .schema-section h4 {
+            color: #daa520;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .schema-section h4::before {
+            content: '🗄️';
+            font-size: 1.1rem;
+        }
+
+        .schema-content {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Enhanced Console Output */
+        .console-output {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(218, 165, 32, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            min-height: 150px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .console-line {
+            margin-bottom: 8px;
+            padding: 3px 0;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .console-success { color: #2ecc71; }
+        .console-error { color: #e74c3c; }
+        .console-warning { color: #f39c12; }
+        .console-info { color: #3498db; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+                gap: 15px;
+                height: auto;
+                min-height: calc(100vh - 180px);
+            }
+            
+            .container {
+                padding: 15px;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .app-content,
+            .panel-content {
+                padding: 20px;
+            }
+
+            .vulnerable-app,
+            .control-panel {
+                min-height: 400px;
+            }
+
+            .challenge-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg"></div>
+    
+    <div class="container">
+        <!-- Enhanced Header -->
+        <div class="header">
+            <div class="challenge-title">SQL Injection Challenge - Bypass Authentication</div>
+            <div class="objective">
+                <strong>Obiettivo:</strong> Sfrutta la vulnerabilità SQL Injection nel form di login per accedere come amministratore senza conoscere la password.
+                <br><strong>Target:</strong> Accedi con username "admin" bypassando l'autenticazione
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Vulnerable Application -->
+            <div class="vulnerable-app">
+                <div class="app-header">SecureLogin - Sistema di Autenticazione Vulnerabile</div>
+                <div class="app-content">
+                    <!-- Login Form -->
+                    <div class="login-form">
+                        <h3>Accesso Utente</h3>
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label class="form-label">Username:</label>
+                                <input type="text" id="username" class="form-input" placeholder="Inserisci username">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Password:</label>
+                                <input type="password" id="password" class="form-input" placeholder="Inserisci password">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">🚀 Accedi</button>
+                        </form>
+                    </div>
+
+                    <!-- SQL Query Display -->
+                    <div class="sql-query-display" id="sqlQuery">
+                        <strong>📊 Query SQL Generata:</strong><br>
+                        <span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users 
+                        <span class="sql-keyword">WHERE</span> username = <span class="sql-string">'[INPUT]'</span> 
+                        <span class="sql-keyword">AND</span> password = <span class="sql-string">'[INPUT]'</span>
+                    </div>
+
+                    <!-- Results Display -->
+                    <div id="loginResults">
+                        <p>Effettua il login per vedere i risultati</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="panel-header">Pannello SQL Injection</div>
+                <div class="panel-content">
+                    <!-- Progress Section -->
+                    <div class="progress-section">
+                        <h4>Progresso Challenge</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="progressText">0% - Inizia la challenge!</span>
+                        </div>
+                    </div>
+
+                    <!-- Payload Section -->
+                    <div class="challenge-section">
+                        <h4>🚀 Testa Payload SQL</h4>
+                        <textarea id="payloadInput" class="payload-input" placeholder="Inserisci il payload SQL qui..."></textarea>
+                        <button class="btn btn-primary" onclick="testPayload()">🧪 Testa Payload</button>
+                    </div>
+
+                    <!-- Payload Suggestions -->
+                    <div class="payload-suggestions">
+                        <h5>Payload SQL Injection</h5>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            admin' --
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            admin' OR '1'='1' --
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            ' OR 1=1 --
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            admin'; DROP TABLE users; --
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            ' UNION SELECT username, password FROM users --
+                        </div>
+                    </div>
+
+                    <!-- Database Schema -->
+                    <div class="schema-section">
+                        <h4>Schema Database</h4>
+                        <div class="schema-content">
+                            <strong>Tabella: users</strong><br>
+                            • id (INT)<br>
+                            • username (VARCHAR)<br>
+                            • password (VARCHAR)<br>
+                            • role (VARCHAR)<br>
+                            • email (VARCHAR)
+                        </div>
+                    </div>
+
+                    <!-- Console Output -->
+                    <div class="challenge-section">
+                        <h4>📟 Console SQL</h4>
+                        <div class="console-output" id="consoleOutput">
+                            <div class="console-line console-info">🔄 Database inizializzato</div>
+                            <div class="console-line console-info">💡 Prova a bypassare l'autenticazione con SQL injection</div>
+                            <div class="console-line console-warning">⚠️ Obiettivo: accedere come admin</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="clearConsole()">🗑️ Pulisci Console</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SQLInjectionChallenge {
+            constructor() {
+                this.startTime = Date.now();
+                this.currentStep = 1;
+                this.maxSteps = 3;
+                this.completed = false;
+                this.attempts = 0;
+                
+                // Mock database
+                this.users = [
+                    { id: 1, username: 'admin', password: 'supersecret123', role: 'administrator', email: 'admin@company.com' },
+                    { id: 2, username: 'john', password: 'password123', role: 'user', email: 'john@company.com' },
+                    { id: 3, username: 'jane', password: 'qwerty456', role: 'user', email: 'jane@company.com' },
+                    { id: 4, username: 'guest', password: 'guest', role: 'guest', email: 'guest@company.com' }
+                ];
+                
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.logToConsole('🎯 Challenge SQL Injection iniziata!', 'info');
+            }
+
+            bindEvents() {
+                document.getElementById('loginForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+
+                window.addEventListener('message', (event) => {
+                    if (event.data.type === 'check-solution') {
+                        this.checkCurrentSolution();
+                    }
+                });
+            }
+
+            handleLogin() {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                this.attempts++;
+                this.logToConsole('🔍 Tentativo ' + this.attempts + ': "' + username + '" / "' + password + '"', 'info');
+
+                // Update SQL query display
+                this.updateSQLDisplay(username, password);
+
+                // Check for SQL injection patterns
+                this.checkForSQLInjection(username, password);
+
+                // Execute "vulnerable" query
+                this.executeQuery(username, password);
+            }
+
+            updateSQLDisplay(username, password) {
+                const sqlDisplay = document.getElementById('sqlQuery');
+                const query = '<strong>📊 Query SQL Generata:</strong><br>' +
+                    '<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users ' +
+                    '<span class="sql-keyword">WHERE</span> username = <span class="sql-string">\'' + username + '\'</span> ' +
+                    '<span class="sql-keyword">AND</span> password = <span class="sql-string">\'' + password + '\'</span>';
+                sqlDisplay.innerHTML = query;
+            }
+
+            checkForSQLInjection(username, password) {
+                const input = username + ' ' + password;
+                
+                // Check for SQL injection attempts
+                if (this.containsSQLInjection(input)) {
+                    if (this.currentStep === 1) {
+                        this.completeStep(1);
+                        this.logToConsole('✅ Step 1: SQL Injection rilevata!', 'success');
+                    }
+                }
+
+                // Check for comment patterns
+                if (input.includes('--') || input.includes('/*')) {
+                    if (this.currentStep <= 2) {
+                        this.completeStep(2);
+                        this.logToConsole('✅ Step 2: Commenti SQL utilizzati!', 'success');
+                    }
+                }
+            }
+
+            containsSQLInjection(input) {
+                const patterns = [
+                    /'/,
+                    /OR/i,
+                    /AND/i,
+                    /UNION/i,
+                    /SELECT/i,
+                    /DROP/i,
+                    /INSERT/i,
+                    /UPDATE/i,
+                    /DELETE/i,
+                    /--/,
+                    /\/\*/,
+                    /1=1/,
+                    /true/i
+                ];
+                
+                return patterns.some(pattern => pattern.test(input));
+            }
+
+            executeQuery(username, password) {
+                // Simulate SQL injection vulnerability
+                let results = [];
+                
+                // Check for bypass attempts
+                if (this.isBypassAttempt(username, password)) {
+                    // Successful bypass
+                    results = this.users.filter(user => user.role === 'administrator');
+                    this.handleSuccessfulBypass(results[0]);
+                } else if (this.containsSQLInjection(username + ' ' + password)) {
+                    // SQL injection detected but not successful bypass
+                    this.logToConsole('⚠️ SQL Injection rilevata ma non efficace', 'warning');
+                    this.showLoginFailure('SQL Injection rilevata ma query fallita');
+                } else {
+                    // Normal authentication
+                    results = this.users.filter(user => 
+                        user.username === username && user.password === password);
+                    
+                    if (results.length > 0) {
+                        this.showLoginSuccess(results[0]);
+                    } else {
+                        this.showLoginFailure('Credenziali non valide');
+                    }
+                }
+            }
+
+            isBypassAttempt(username, password) {
+                const bypassPatterns = [
+                    // Comment-based bypass
+                    () => username.includes("'") && username.includes('--'),
+                    () => username.toLowerCase().includes("admin'") && username.includes('--'),
+                    
+                    // OR-based bypass
+                    () => username.includes("'") && username.toLowerCase().includes('or') && username.includes('1=1'),
+                    () => password.includes("'") && password.toLowerCase().includes('or') && password.includes('1=1'),
+                    
+                    // Always true conditions
+                    () => (username.includes("'") || password.includes("'")) && 
+                          (username.toLowerCase().includes('or 1=1') || password.toLowerCase().includes('or 1=1')),
+                ];
+                
+                return bypassPatterns.some(pattern => pattern());
+            }
+
+            handleSuccessfulBypass(adminUser) {
+                this.completeStep(3);
+                this.completeChallenge();
+                
+                this.logToConsole('🎉 BYPASS RIUSCITO! Accesso come amministratore!', 'success');
+                
+                const resultsDiv = document.getElementById('loginResults');
+                resultsDiv.innerHTML = 
+                    '<div class="result-success">' +
+                    '<h4>✅ Accesso Riuscito!</h4>' +
+                    '<p><strong>Benvenuto, ' + adminUser.username + '!</strong></p>' +
+                    '<p>Ruolo: <span style="color: #e74c3c; font-weight: bold;">' + adminUser.role + '</span></p>' +
+                    '<p>Email: ' + adminUser.email + '</p>' +
+                    '<h5 style="margin-top: 15px;">👥 Utenti nel Sistema:</h5>' +
+                    '<table class="users-table">' +
+                    '<tr><th>ID</th><th>Username</th><th>Role</th><th>Email</th></tr>' +
+                    this.users.map(user => 
+                        '<tr class="' + (user.role === 'administrator' ? 'admin-row' : '') + '">' +
+                        '<td>' + user.id + '</td>' +
+                        '<td>' + user.username + '</td>' +
+                        '<td>' + user.role + '</td>' +
+                        '<td>' + user.email + '</td>' +
+                        '</tr>'
+                    ).join('') +
+                    '</table>' +
+                    '</div>';
+            }
+
+            showLoginSuccess(user) {
+                const resultsDiv = document.getElementById('loginResults');
+                resultsDiv.innerHTML = 
+                    '<div class="result-success">' +
+                    '<h4>✅ Accesso Riuscito</h4>' +
+                    '<p>Benvenuto, ' + user.username + '!</p>' +
+                    '<p>Ruolo: ' + user.role + '</p>' +
+                    '<p><em>Nota: Non sei amministratore. Prova SQL injection per bypassare l\'autenticazione.</em></p>' +
+                    '</div>';
+            }
+
+            showLoginFailure(message) {
+                const resultsDiv = document.getElementById('loginResults');
+                resultsDiv.innerHTML = 
+                    '<div class="result-error">' +
+                    '<h4>❌ Accesso Fallito</h4>' +
+                    '<p>' + message + '</p>' +
+                    '<p><em>Suggerimento: Prova ad usare SQL injection per bypassare l\'autenticazione.</em></p>' +
+                    '</div>';
+            }
+
+            completeStep(stepNumber) {
+                if (stepNumber <= this.currentStep) return;
+                this.currentStep = stepNumber;
+                this.updateProgress();
+            }
+
+            completeChallenge() {
+                if (this.completed) return;
+                
+                this.completed = true;
+                this.logToConsole('🏆 CHALLENGE COMPLETATA! SQL Injection eseguita con successo!', 'success');
+                
+                // Notify parent window
+                window.parent.postMessage({
+                    type: 'lab-completed',
+                    points: 150,
+                    timeSpent: this.getTimeSpent(),
+                    solutions: ['SQL Injection authentication bypass']
+                }, '*');
+            }
+
+            updateProgress() {
+                const percentage = (this.currentStep / this.maxSteps) * 100;
+                document.getElementById('progressBar').style.width = percentage + '%';
+                document.getElementById('progressText').textContent = 
+                    Math.floor(percentage) + '% - Step ' + this.currentStep + '/' + this.maxSteps;
+            }
+
+            getTimeSpent() {
+                const elapsed = Date.now() - this.startTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                return minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+            }
+
+            logToConsole(message, type) {
+                type = type || 'info';
+                const console = document.getElementById('consoleOutput');
+                const timestamp = new Date().toLocaleTimeString();
+                const line = document.createElement('div');
+                line.className = 'console-line console-' + type;
+                line.textContent = '[' + timestamp + '] ' + message;
+                console.appendChild(line);
+                console.scrollTop = console.scrollHeight;
+            }
+
+            checkCurrentSolution() {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                if (this.isBypassAttempt(username, password)) {
+                    this.logToConsole('✅ Soluzione corretta rilevata!', 'success');
+                    this.handleLogin();
+                } else {
+                    this.logToConsole('❌ Prova con un payload SQL injection per bypassare l\'autenticazione', 'error');
+                }
+            }
+        }
+
+        // Global functions
+        window.testPayload = function() {
+            const payload = document.getElementById('payloadInput').value;
+            if (payload.trim()) {
+                document.getElementById('username').value = payload;
+                challenge.handleLogin();
+            } else {
+                challenge.logToConsole('❌ Inserisci un payload da testare', 'error');
+            }
+        };
+
+        window.selectPayload = function(element) {
+            const payload = element.textContent.trim();
+            document.getElementById('payloadInput').value = payload;
+            document.getElementById('username').value = payload;
+            challenge.logToConsole('💡 Payload selezionato: ' + payload, 'info');
+        };
+
+        window.clearConsole = function() {
+            document.getElementById('consoleOutput').innerHTML = '';
+            challenge.logToConsole('🔄 Console pulita', 'info');
+        };
+
+        // Initialize challenge
+        let challenge;
+        document.addEventListener('DOMContentLoaded', function() {
+            challenge = new SQLInjectionChallenge();
+        });
+    </script>
+</body>
+</html>

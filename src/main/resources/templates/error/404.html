@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | CyberLab</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/errors.css}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+	<!-- Matrix Background -->
+	   <div class="matrix-bg">
+	       <span th:each="i : ${#numbers.sequence(1, 300)}" class="matrix-cell"></span>
+	   </div>
+	   
+	   <!-- Navigation -->
+	   <nav class="navbar">
+	       <div class="container">
+	           <div class="navbar-content">
+	               <a th:href="@{/}" class="navbar-brand">
+	                   <i class="fas fa-shield-alt"></i>
+	                   CyberLab
+	               </a>
+	               
+	               <ul class="navbar-nav">
+	                   <li><a th:href="@{/}" class="nav-link active"><i class="fas fa-home"></i> Home</a></li>
+	                   <li><a th:href="@{/labs}" class="nav-link"><i class="fas fa-flask"></i> Labs</a></li>
+	                   <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-code"></i> Community</a></li>
+	                   
+	                   
+	                   <!-- User Menu -->
+	                   <li sec:authorize="isAuthenticated()">
+	                       <a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+	                   </li>
+	                   <li sec:authorize="hasRole('ADMIN')">
+	                       <a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-cog"></i> Admin</a>
+	                   </li>
+	                   
+	                   <!-- Auth Links -->
+	                   <li sec:authorize="!isAuthenticated()">
+	                       <a th:href="@{/login}" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+	                   </li>
+	                   <li sec:authorize="!isAuthenticated()">
+	                       <a th:href="@{/register}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Join</a>
+	                   </li>
+	                   
+	                   <!-- User Dropdown -->
+	                   <li sec:authorize="isAuthenticated()" class="user-menu">
+	                       <div class="user-dropdown">
+	                           <button class="user-btn">
+	                               <i class="fas fa-user"></i>
+	                               <span sec:authentication="name">User</span>
+	                               <i class="fas fa-chevron-down"></i>
+	                           </button>
+	                           <div class="dropdown-content">
+	                               <a th:href="@{/profile}"><i class="fas fa-user-circle"></i> Profile</a>
+	                              
+	                               <hr>
+	                               <form th:action="@{/logout}" method="post">
+	                                   <button type="submit" class="logout-btn">
+	                                       <i class="fas fa-sign-out-alt"></i> Logout
+	                                   </button>
+	                               </form>
+	                           </div>
+	                       </div>
+	                   </li>
+	               </ul>
+	           </div>
+	       </div>
+	   </nav>
+
+    <!-- Main Content -->
+    <main class="error-container">
+        <div class="container">
+            <div class="error-content">
+                <!-- Error Code -->
+                <div class="error-code">
+                    <div class="code-container">
+                        <span class="error-digit glitch" data-text="4">4</span>
+                        <span class="error-digit glitch" data-text="0">0</span>
+                        <span class="error-digit glitch" data-text="4">4</span>
+                    </div>
+                    <div class="error-subtitle">PAGE NOT FOUND</div>
+                </div>
+
+                <!-- Error Message -->
+                <div class="error-message">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div class="icon-glow"></div>
+                    </div>
+                    
+                    <h1>Oops! Something went wrong</h1>
+                    <p class="error-description">
+                        The page you're looking for seems to have vanished into the digital void. 
+                        It might have been moved, deleted, or you may have entered the wrong URL.
+                    </p>
+
+                    <!-- Error Details Card - FIXED LINE 107 -->
+                    <div th:if="${(error != null and !#strings.isEmpty(error) and !#strings.contains(error, 'No static resource')) or (message != null and !#strings.isEmpty(message) and !#strings.contains(message, 'No static resource')) or (path != null and !#strings.isEmpty(path) and !#strings.contains(path, 'No static resource'))}" class="error-details-card">
+                        <div class="error-details-header">
+                            <i class="fas fa-info-circle"></i>
+                            <h3>Error Details</h3>
+                        </div>
+                        <div class="error-details-body">
+                            <div th:if="${status}" class="detail-item">
+                                <span class="detail-label">Status Code:</span>
+                                <span class="detail-value" th:text="${status}">404</span>
+                            </div>
+                            <div th:if="${error != null and !#strings.isEmpty(error) and !#strings.contains(error, 'No static resource')}" class="detail-item">
+                                <span class="detail-label">Error Type:</span>
+                                <span class="detail-value" th:text="${error}">Not Found</span>
+                            </div>
+                            <div th:if="${message != null and !#strings.isEmpty(message) and !#strings.contains(message, 'No static resource')}" class="detail-item">
+                                <span class="detail-label">Message:</span>
+                                <span class="detail-value" th:text="${message}">The requested resource was not found</span>
+                            </div>
+                            <div th:if="${path != null and !#strings.isEmpty(path) and !#strings.contains(path, 'No static resource')}" class="detail-item">
+                                <span class="detail-label">Requested Path:</span>
+                                <span class="detail-value path-value" th:text="${path}">/unknown/path</span>
+                            </div>
+                            <div th:if="${timestamp}" class="detail-item">
+                                <span class="detail-label">Timestamp:</span>
+                                <span class="detail-value" th:text="${#temporals.format(timestamp, 'yyyy-MM-dd HH:mm:ss')}">2025-07-26 23:04:45</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terminal-style Error Info -->
+                    <div class="terminal-error">
+                        <div class="terminal-header">
+                            <div class="terminal-controls">
+                                <span class="control red"></span>
+                                <span class="control yellow"></span>
+                                <span class="control green"></span>
+                            </div>
+                            <span class="terminal-title">cyberlab:~$ error_log</span>
+                        </div>
+                        <div class="terminal-body">
+                            <div class="terminal-line">
+                                <span class="prompt">cyberlab@server:~$</span> 
+                                <span class="command">404 ERROR_NOT_FOUND</span>
+                            </div>
+                            <div class="terminal-line">
+                                <span class="error-text">Resource not accessible</span>
+                            </div>
+                            <div th:if="${path != null and !#strings.isEmpty(path) and !#strings.contains(path, 'No static resource')}" class="terminal-line">
+                                <span class="error-text">Path: <span th:text="${path}">/unknown/path</span></span>
+                            </div>
+                            <div th:if="${message != null and !#strings.isEmpty(message) and !#strings.contains(message, 'No static resource')}" class="terminal-line">
+                                <span class="error-text">Reason: <span th:text="${message}">Resource not found</span></span>
+                            </div>
+                            <div class="terminal-line">
+                                <span class="info-text">Timestamp: <span th:text="${timestamp != null ? #temporals.format(timestamp, 'yyyy-MM-dd HH:mm:ss') : #temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}"></span></span>
+                            </div>
+                            <div class="terminal-line">
+                                <span class="info-text">User-Agent: Navigator</span>
+                            </div>
+                            <div class="terminal-line cursor-line">
+                                <span class="prompt">cyberlab@server:~$</span>
+                                <span class="cursor">_</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+    <!-- JavaScript (inline, no external dependencies) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Matrix effect enhancement for error page
+            createErrorMatrixEffect();
+
+            // Glitch animation for 404 digits
+            setInterval(() => {
+                const digits = document.querySelectorAll('.error-digit');
+                digits.forEach(digit => {
+                    if (Math.random() > 0.9) {
+                        digit.classList.add('glitch-active');
+                        setTimeout(() => {
+                            digit.classList.remove('glitch-active');
+                        }, 200);
+                    }
+                });
+            }, 2000);
+
+            // Terminal cursor blinking
+            const cursor = document.querySelector('.cursor');
+            if (cursor) {
+                setInterval(() => {
+                    cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
+                }, 500);
+            }
+
+            // Search on Enter key
+            const searchInput = document.getElementById('errorSearch');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+            }
+        });
+
+        function createErrorMatrixEffect() {
+            const cells = document.querySelectorAll('.error-cell');
+            cells.forEach((cell, index) => {
+                // Random error effect
+                setTimeout(() => {
+                    if (Math.random() > 0.8) {
+                        cell.classList.add('error-active');
+                        setTimeout(() => {
+                            cell.classList.remove('error-active');
+                        }, 1000);
+                    }
+                }, Math.random() * 5000);
+            });
+        }
+
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/';
+            }
+        }
+
+        function performSearch() {
+            const query = document.getElementById('errorSearch').value.trim();
+            if (query) {
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
+            }
+        }
+
+        // User dropdown functionality (copied from app.js)
+        function initUserDropdown() {
+            const userDropdowns = document.querySelectorAll('.user-dropdown');
+            userDropdowns.forEach(dropdown => {
+                const btn = dropdown.querySelector('.user-btn');
+                const content = dropdown.querySelector('.dropdown-content');
+                
+                if (btn && content) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Close other dropdowns
+                        userDropdowns.forEach(other => {
+                            if (other !== dropdown) {
+                                other.querySelector('.dropdown-content').classList.remove('show');
+                            }
+                        });
+                        
+                        // Toggle current dropdown
+                        content.classList.toggle('show');
+                    });
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function() {
+                userDropdowns.forEach(dropdown => {
+                    dropdown.querySelector('.dropdown-content').classList.remove('show');
+                });
+            });
+        }
+
+        // Initialize user dropdown after DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            initUserDropdown();
+        });
+    </script>
+</body>
+</html>

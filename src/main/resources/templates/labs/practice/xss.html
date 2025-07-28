@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Challenge - CyberLab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Matrix Background */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .matrix-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 65, 0.05), transparent);
+            animation: matrix-flow 15s linear infinite;
+        }
+
+        @keyframes matrix-flow {
+            0% { transform: translateX(-100%) rotate(0deg); }
+            100% { transform: translateX(100%) rotate(360deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Enhanced Header */
+        .header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff0000, #00ff41, #00ffff);
+            animation: rainbow 3s linear infinite;
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .challenge-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .challenge-title {
+            font-size: 1.8rem;
+            color: #00ff41;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .challenge-title::before {
+            content: '🎯';
+            font-size: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        .challenge-status {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.3);
+        }
+
+        .status-pending {
+            background: rgba(255, 165, 0, 0.2);
+            border-color: #ffa500;
+            color: #ffa500;
+        }
+
+        .status-completed {
+            background: rgba(0, 255, 65, 0.2);
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+
+        .objective {
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.1), rgba(0, 255, 255, 0.1));
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .objective::before {
+            content: '💡';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            min-height: 0;
+            height: calc(100vh - 200px);
+        }
+
+        /* Enhanced Vulnerable App */
+        .vulnerable-app {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vulnerable-app:hover {
+            border-color: rgba(0, 255, 65, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 255, 65, 0.2);
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            padding: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .app-header::before {
+            content: '⚠️';
+            font-size: 1.2rem;
+            animation: warning-blink 2s infinite;
+        }
+
+        @keyframes warning-blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .app-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        /* Enhanced User Profile */
+        .user-profile {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 123, 255, 0.1));
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 20px rgba(116, 185, 255, 0.5);
+        }
+
+        .user-profile h4 {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .user-profile p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .user-profile small {
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Enhanced Search Form */
+        .search-form {
+            margin-bottom: 30px;
+        }
+
+        .search-form h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-form h3::before {
+            content: '🔍';
+            font-size: 1.2rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-info {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff41, #00cc33);
+            color: #000;
+            border: 1px solid #00ff41;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 65, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e17055, #d63031);
+            color: white;
+            border: 1px solid #e17055;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(225, 112, 85, 0.4);
+        }
+
+        /* Enhanced Results Section */
+        .results-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 25px;
+        }
+
+        .results-section h4 {
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .results-section h4::before {
+            content: '📋';
+            font-size: 1.1rem;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #74b9ff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: #00ff41;
+        }
+
+        #searchResults p {
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Enhanced Control Panel */
+        .control-panel {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+            padding: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .panel-header::before {
+            content: '⚡';
+            font-size: 1.2rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .panel-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        /* Enhanced Progress Section */
+        .progress-section {
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.1), rgba(0, 255, 255, 0.1));
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .progress-section h4 {
+            color: #00ff41;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-section h4::before {
+            content: '📊';
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41, #00ffff);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            width: 0%;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #00ff41;
+            font-weight: 600;
+        }
+
+        .steps-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .steps-list li {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .steps-list li:last-child {
+            border-bottom: none;
+        }
+
+        .step-status {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .step-pending {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .step-completed {
+            background: linear-gradient(135deg, #00ff41, #00cc33);
+            animation: pulse-success 2s infinite;
+        }
+
+        .step-active {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse-success {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); }
+        }
+
+        /* Enhanced Challenge Section */
+        .challenge-section {
+            margin-bottom: 25px;
+        }
+
+        .challenge-section h4 {
+            color: #fff;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #00ff41;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .payload-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            resize: vertical;
+            min-height: 100px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #00ff41;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .payload-input:focus {
+            outline: none;
+            border-color: #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+
+        .payload-input::placeholder {
+            color: rgba(0, 255, 65, 0.6);
+        }
+
+        /* Enhanced Payload Suggestions */
+        .payload-suggestions {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .payload-suggestions h5 {
+            margin-bottom: 15px;
+            color: #00ff41;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payload-suggestions h5::before {
+            content: '💡';
+            font-size: 1rem;
+        }
+
+        .payload-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #00ffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payload-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .payload-item:hover::before {
+            left: 100%;
+        }
+
+        .payload-item:hover {
+            background: rgba(0, 255, 65, 0.1);
+            border-color: #00ff41;
+            transform: translateX(5px);
+        }
+
+        /* Enhanced Console Output */
+        .console-output {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            min-height: 180px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .console-line {
+            margin-bottom: 8px;
+            padding: 3px 0;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .console-success { color: #00ff41; }
+        .console-error { color: #ff4444; }
+        .console-warning { color: #ffa500; }
+        .console-info { color: #00ffff; }
+
+        /* Enhanced Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 0.95));
+            border: 2px solid #00ff41;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff0000, #00ff41, #00ffff);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-content h2 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .modal-content p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 25px;
+        }
+
+        .completion-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .completion-stats .stat {
+            text-align: center;
+        }
+
+        .completion-stats .value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .completion-stats .label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .completion-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #00ff41, #00cc33);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin: 0 auto 25px;
+            animation: bounce 1s infinite;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); }
+            60% { transform: translateY(-8px); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+                gap: 15px;
+                height: auto;
+                min-height: calc(100vh - 180px);
+            }
+            
+            .challenge-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .challenge-status {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .container {
+                padding: 15px;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .app-content,
+            .panel-content {
+                padding: 20px;
+            }
+
+            .vulnerable-app,
+            .control-panel {
+                min-height: 400px;
+            }
+
+            .completion-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg"></div>
+    
+    <div class="container">
+        <!-- Enhanced Header -->
+        <div class="header">
+            <div class="challenge-info">
+                <div class="challenge-title">XSS Challenge - Reflected XSS</div>
+                <div class="challenge-status">
+                    <div class="status-item status-pending" id="challengeStatus">
+                        <span>⏳</span>
+                        <span>In Corso</span>
+                    </div>
+                    <div class="status-item">
+                        <span>💎</span>
+                        <span id="pointsDisplay">0/150 Punti</span>
+                    </div>
+                    <div class="status-item">
+                        <span>⏱️</span>
+                        <span id="timeDisplay">00:00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="objective">
+                <strong>Obiettivo:</strong> Trova e sfrutta la vulnerabilità XSS nella funzione di ricerca per eseguire JavaScript nel browser della vittima.
+                <br><strong>Target:</strong> Fai apparire un alert con il messaggio "XSS_SUCCESS"
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Vulnerable Application -->
+            <div class="vulnerable-app">
+                <div class="app-header">
+                    VulnSearch - Motore di Ricerca Vulnerabile
+                </div>
+                <div class="app-content">
+                    <!-- User Profile -->
+                    <div class="user-profile">
+                        <div class="profile-info">
+                            <div class="avatar">👤</div>
+                            <div>
+                                <h4>Vittima Simulata</h4>
+                                <p>Utente normale che naviga il sito</p>
+                                <small>Cookie di sessione: <code>session_id=abc123xyz</code></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Form -->
+                    <div class="search-form">
+                        <h3>Cerca nel Database</h3>
+                        <form id="searchForm">
+                            <div class="input-group">
+                                <input type="text" 
+                                       id="searchInput" 
+                                       class="search-input" 
+                                       placeholder="Inserisci il termine di ricerca..."
+                                       value="">
+                                <button type="submit" class="btn btn-primary">Cerca</button>
+                                <button type="button" class="btn btn-danger" onclick="clearResults()">Pulisci</button>
+                            </div>
+                        </form>
+                        
+                        <div class="search-info">
+                            💡 La ricerca viene riflessa nella pagina senza validazione
+                        </div>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="results-section">
+                        <h4>Risultati della Ricerca</h4>
+                        <div id="searchResults">
+                            <p>Nessuna ricerca effettuata</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="panel-header">
+                    Pannello di Controllo Hacker
+                </div>
+                <div class="panel-content">
+                    <!-- Progress Section -->
+                    <div class="progress-section">
+                        <h4>Progresso Challenge</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="progressText">0% - Inizia la sfida!</span>
+                        </div>
+                        
+                        <ul class="steps-list">
+                            <li>
+                                <span class="step-status step-active" id="step1">1</span>
+                                <span>Identifica il punto di iniezione</span>
+                            </li>
+                            <li>
+                                <span class="step-status step-pending" id="step2">2</span>
+                                <span>Testa un payload XSS semplice</span>
+                            </li>
+                            <li>
+                                <span class="step-status step-pending" id="step3">3</span>
+                                <span>Esegui JavaScript con successo</span>
+                            </li>
+                            <li>
+                                <span class="step-status step-pending" id="step4">4</span>
+                                <span>Ottieni l'alert "XSS_SUCCESS"</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Payload Section -->
+                    <div class="challenge-section">
+                        <h4>🚀 Testa i tuoi Payload</h4>
+                        <textarea id="payloadInput" 
+                                  class="payload-input" 
+                                  placeholder="Inserisci il tuo payload XSS qui..."></textarea>
+                        
+                        <button class="btn btn-primary" onclick="testPayload()">
+                            🧪 Testa Payload
+                        </button>
+                        <button class="btn btn-danger" onclick="autoFillPayload()">
+                            💊 Payload Suggerito
+                        </button>
+                    </div>
+
+                    <!-- Payload Suggestions -->
+                    <div class="payload-suggestions">
+                        <h5>Payload Suggeriti</h5>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            &lt;script&gt;alert('test')&lt;/script&gt;
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            &lt;img src=x onerror=alert('xss')&gt;
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            &lt;svg onload=alert('svg')&gt;
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            javascript:alert('js')
+                        </div>
+                        <div class="payload-item" onclick="selectPayload(this)">
+                            &lt;script&gt;alert('XSS_SUCCESS')&lt;/script&gt;
+                        </div>
+                    </div>
+
+                    <!-- Console Output -->
+                    <div class="challenge-section">
+                        <h4>📟 Console di Debug</h4>
+                        <div class="console-output" id="consoleOutput">
+                            <div class="console-line console-info">🔄 Sistema inizializzato</div>
+                            <div class="console-line console-info">💡 Suggerimento: Prova a inserire del JavaScript nella ricerca</div>
+                            <div class="console-line console-warning">⚠️ Ricorda: l'obiettivo è ottenere un alert con "XSS_SUCCESS"</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="clearConsole()">🗑️ Pulisci Console</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="success-icon">🏆</div>
+            <h2>Congratulazioni!</h2>
+            <p>Hai completato con successo la challenge XSS!</p>
+            <div class="completion-stats">
+                <div class="stat">
+                    <span class="value" id="finalPoints">150</span>
+                    <span class="label">Punti guadagnati</span>
+                </div>
+                <div class="stat">
+                    <span class="value" id="finalTime">00:00</span>
+                    <span class="label">Tempo impiegato</span>
+                </div>
+            </div>
+            <div class="completion-actions">
+                <button class="btn btn-primary" onclick="closeModal()">Continua</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class XSSChallenge {
+            constructor() {
+                this.startTime = Date.now();
+                this.currentStep = 1;
+                this.maxSteps = 4;
+                this.points = 0;
+                this.maxPoints = 150;
+                this.completed = false;
+                this.attempts = 0;
+                
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.startTimer();
+                this.logToConsole('🎯 Challenge iniziata! Trova la vulnerabilità XSS.', 'info');
+            }
+
+            bindEvents() {
+                document.getElementById('searchForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleSearch();
+                });
+
+                // Listen for messages from parent
+                window.addEventListener('message', (event) => {
+                    if (event.data.type === 'check-solution') {
+                        this.checkCurrentSolution();
+                    }
+                });
+            }
+
+            handleSearch() {
+                const searchInput = document.getElementById('searchInput');
+                const query = searchInput.value;
+                
+                if (!query.trim()) {
+                    this.showResults('❌ Inserisci un termine di ricerca valido');
+                    return;
+                }
+
+                this.attempts++;
+                this.logToConsole(`🔍 Tentativo ${this.attempts}: "${query}"`, 'info');
+
+                // Step 1: Identify injection point
+                if (this.currentStep === 1 && query.includes('<')) {
+                    this.completeStep(1);
+                    this.logToConsole('✅ Step 1 completato: Punto di iniezione identificato!', 'success');
+                }
+
+                // Simulate vulnerable search - directly reflect user input
+                this.performVulnerableSearch(query);
+            }
+
+            performVulnerableSearch(query) {
+                const resultsDiv = document.getElementById('searchResults');
+                
+                // This is intentionally vulnerable - reflects user input without sanitization
+                const vulnerableHTML = `
+                    <div class="result-item">
+                        <strong>🔍 Ricerca per:</strong> ${query}
+                    </div>
+                    <div class="result-item">
+                        <strong>📋 Risultati trovati:</strong> 0 elementi corrispondono a "${query}"
+                    </div>
+                    <div class="result-item">
+                        <small>💡 La tua ricerca "${query}" è stata processata senza filtri di sicurezza</small>
+                    </div>
+                `;
+
+                resultsDiv.innerHTML = vulnerableHTML;
+
+                // Check for XSS execution
+                this.checkForXSS(query);
+            }
+
+            checkForXSS(query) {
+                // Step 2: Simple XSS test
+                if (this.currentStep <= 2 && this.containsBasicXSS(query)) {
+                    this.completeStep(2);
+                    this.logToConsole('✅ Step 2 completato: Payload XSS rilevato!', 'success');
+                }
+
+                // Step 3: JavaScript execution
+                if (this.currentStep <= 3 && this.containsJavaScript(query)) {
+                    this.completeStep(3);
+                    this.logToConsole('✅ Step 3 completato: JavaScript eseguito!', 'success');
+                }
+
+                // Step 4: Success condition
+                if (query.includes('XSS_SUCCESS') && this.containsJavaScript(query)) {
+                    this.completeStep(4);
+                    this.completeChallenge();
+                }
+            }
+
+            containsBasicXSS(query) {
+                const xssPatterns = [
+                    /<script/i,
+                    /<img.*onerror/i,
+                    /<svg.*onload/i,
+                    /javascript:/i,
+                    /<iframe/i,
+                    /onmouseover/i,
+                    /onclick/i
+                ];
+                
+                return xssPatterns.some(pattern => pattern.test(query));
+            }
+
+            containsJavaScript(query) {
+                return query.includes('alert') || 
+                       query.includes('confirm') || 
+                       query.includes('prompt') ||
+                       query.includes('console.log') ||
+                       /javascript:/i.test(query);
+            }
+
+            completeStep(stepNumber) {
+                if (stepNumber <= this.currentStep) return;
+
+                this.currentStep = stepNumber;
+                this.points = Math.floor((stepNumber / this.maxSteps) * this.maxPoints);
+                
+                // Update UI
+                document.getElementById(`step${stepNumber}`).className = 'step-status step-completed';
+                document.getElementById(`step${stepNumber}`).innerHTML = '✓';
+                
+                if (stepNumber < this.maxSteps) {
+                    document.getElementById(`step${stepNumber + 1}`).className = 'step-status step-active';
+                }
+                
+                this.updateProgress();
+                this.updatePoints();
+            }
+
+            completeChallenge() {
+                if (this.completed) return;
+                
+                this.completed = true;
+                this.points = this.maxPoints;
+                
+                this.logToConsole('🎉 CHALLENGE COMPLETATA! XSS eseguito con successo!', 'success');
+                this.logToConsole(`💎 Punti guadagnati: ${this.points}`, 'success');
+                
+                document.getElementById('challengeStatus').className = 'status-item status-completed';
+                document.getElementById('challengeStatus').innerHTML = '<span>✅</span><span>Completata</span>';
+                
+                // Show success modal
+                setTimeout(() => {
+                    this.showSuccessModal();
+                }, 1000);
+
+                // Notify parent window
+                window.parent.postMessage({
+                    type: 'lab-completed',
+                    points: this.points,
+                    timeSpent: this.getTimeSpent(),
+                    solutions: ['XSS Reflected vulnerability exploited']
+                }, '*');
+            }
+
+            updateProgress() {
+                const percentage = (this.currentStep / this.maxSteps) * 100;
+                document.getElementById('progressBar').style.width = `${percentage}%`;
+                document.getElementById('progressText').textContent = 
+                    `${Math.floor(percentage)}% - Step ${this.currentStep}/${this.maxSteps}`;
+            }
+
+            updatePoints() {
+                document.getElementById('pointsDisplay').textContent = `${this.points}/${this.maxPoints} Punti`;
+            }
+
+            startTimer() {
+                setInterval(() => {
+                    const elapsed = Date.now() - this.startTime;
+                    const minutes = Math.floor(elapsed / 60000);
+                    const seconds = Math.floor((elapsed % 60000) / 1000);
+                    document.getElementById('timeDisplay').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            getTimeSpent() {
+                const elapsed = Date.now() - this.startTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            logToConsole(message, type = 'info') {
+                const console = document.getElementById('consoleOutput');
+                const timestamp = new Date().toLocaleTimeString();
+                const line = document.createElement('div');
+                line.className = `console-line console-${type}`;
+                line.textContent = `[${timestamp}] ${message}`;
+                console.appendChild(line);
+                console.scrollTop = console.scrollHeight;
+            }
+
+            showSuccessModal() {
+                document.getElementById('finalPoints').textContent = this.points;
+                document.getElementById('finalTime').textContent = this.getTimeSpent();
+                document.getElementById('successModal').style.display = 'flex';
+            }
+
+            showResults(message) {
+                document.getElementById('searchResults').innerHTML = '<p>' + message + '</p>';
+            }
+
+            checkCurrentSolution() {
+                const searchInput = document.getElementById('searchInput').value;
+                if (searchInput.includes('XSS_SUCCESS') && this.containsJavaScript(searchInput)) {
+                    this.logToConsole('✅ Soluzione corretta rilevata!', 'success');
+                    this.handleSearch();
+                } else {
+                    this.logToConsole('❌ Soluzione non corretta. Prova con un payload che contenga "XSS_SUCCESS"', 'error');
+                }
+            }
+        }
+
+        // Global functions
+        window.testPayload = function() {
+            const payload = document.getElementById('payloadInput').value;
+            if (payload.trim()) {
+                document.getElementById('searchInput').value = payload;
+                challenge.handleSearch();
+            } else {
+                challenge.logToConsole('❌ Inserisci un payload da testare', 'error');
+            }
+        };
+
+        window.autoFillPayload = function() {
+            document.getElementById('payloadInput').value = '<' + 'script>alert("XSS_SUCCESS")<' + '/script>';
+            challenge.logToConsole('💡 Payload suggerito inserito!', 'info');
+        };
+
+        window.selectPayload = function(element) {
+            const payload = element.textContent;
+            document.getElementById('payloadInput').value = payload;
+            document.getElementById('searchInput').value = payload;
+            challenge.logToConsole(`💡 Payload selezionato: ${payload}`, 'info');
+        };
+
+        window.clearResults = function() {
+            document.getElementById('searchResults').innerHTML = 
+                '<p>Risultati puliti</p>';
+            document.getElementById('searchInput').value = '';
+            challenge.logToConsole('🗑️ Risultati di ricerca puliti', 'info');
+        };
+
+        window.clearConsole = function() {
+            document.getElementById('consoleOutput').innerHTML = '';
+            challenge.logToConsole('🔄 Console pulita', 'info');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('successModal').style.display = 'none';
+        };
+
+        // Initialize challenge
+        let challenge;
+        document.addEventListener('DOMContentLoaded', function() {
+            challenge = new XSSChallenge();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' - CyberLab'}">Categories - CyberLab</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/categories.css}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg">
+        <span th:each="i : ${#numbers.sequence(1, 120)}" class="matrix-cell"></span>
+    </div>
+
+    <!-- Navigation -->
+    <nav th:replace="~{base :: navbar}"></nav>
+
+    <!-- Main Content -->
+    <main class="categories-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="categories-header">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1 class="glitch-text" data-text="CATEGORIES">
+                            <i class="fas fa-tags"></i> CATEGORIES
+                        </h1>
+                        <p class="hero-subtitle">Explore Cybersecurity Domains</p>
+                        <p class="hero-description">
+                            Dive deep into specialized areas of cybersecurity. Each category contains carefully curated labs, tutorials, and community discussions.
+                        </p>
+                    </div>
+                    
+                    <div class="header-visual">
+                        <div class="categories-stats">
+                            <div class="stat-circle">
+                                <span class="stat-number" th:text="${#lists.size(categories)}">12</span>
+                                <span class="stat-label">Categories</span>
+                            </div>
+                            <div class="stat-lines">
+                                <div class="stat-line">
+                                    <span class="stat-value">156</span>
+                                    <span class="stat-desc">Total Labs</span>
+                                </div>
+                                <div class="stat-line">
+                                    <span class="stat-value">1,247</span>
+                                    <span class="stat-desc">Total Posts</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="categories-controls">
+                <div class="search-section">
+                    <div class="search-container">
+                        <input type="text" id="categorySearch" class="search-input" placeholder="Search categories...">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                </div>
+                
+                <div class="filter-section">
+                    <select id="sortBy" class="filter-select">
+                        <option value="name">Sort by Name</option>
+                        <option value="posts">Most Posts</option>
+                        <option value="labs">Most Labs</option>
+                        <option value="activity">Most Active</option>
+                    </select>
+                    
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="view-btn" data-view="list">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Grid -->
+            <div class="categories-section">
+                <div class="categories-grid" id="categoriesGrid">
+                    <div class="category-card" th:each="category : ${categories}" th:data-category="${category.name}">
+                        <div class="card-overlay"></div>
+                        
+                        <div class="category-header">
+                            <div class="category-icon">
+                                <i class="fas fa-shield-alt" th:classappend="${category.name == 'Web Security' ? 'fa-globe' : 
+                                                                              category.name == 'Network Security' ? 'fa-network-wired' :
+                                                                              category.name == 'Cryptography' ? 'fa-key' :
+                                                                              category.name == 'Malware Analysis' ? 'fa-bug' :
+                                                                              category.name == 'Forensics' ? 'fa-search' :
+                                                                              category.name == 'Social Engineering' ? 'fa-users' :
+                                                                              'fa-shield-alt'}"></i>
+                            </div>
+                            <div class="category-meta">
+                                <span class="difficulty-indicator" 
+                                      th:classappend="${category.name == 'Web Security' or category.name == 'Network Security' ? 'beginner' :
+                                                      category.name == 'Cryptography' or category.name == 'Forensics' ? 'intermediate' :
+                                                      'advanced'}">
+                                    <span th:text="${category.name == 'Web Security' or category.name == 'Network Security' ? 'Beginner' :
+                                                   category.name == 'Cryptography' or category.name == 'Forensics' ? 'Intermediate' :
+                                                   'Advanced'}">Beginner</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="category-content">
+                            <h3 th:text="${category.name}">Web Security</h3>
+                            <p class="category-description" th:text="${category.description ?: 'Comprehensive study of ' + category.name + ' techniques and countermeasures.'}">
+                                Learn about web application security, common vulnerabilities, and how to protect against them.
+                            </p>
+                            
+                            <div class="category-stats">
+                                <div class="stat-item">
+                                    <i class="fas fa-flask"></i>
+                                    <span th:text="${category.labCount ?: '0'} + ' Labs'">12 Labs</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-comments"></i>
+                                    <span th:text="${category.postCount ?: '0'} + ' Posts'">89 Posts</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-users"></i>
+                                    <span>Active</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-progress" th:if="${userProgress != null and userProgress.containsKey(category.id)}">
+                            <div class="progress-info">
+                                <span>Your Progress</span>
+                                <span th:text="${userProgress.get(category.id).completionPercentage + '%'}">75%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" th:style="'width: ' + ${userProgress.get(category.id).completionPercentage} + '%'"></div>
+                            </div>
+                        </div>
+
+                        <div class="category-tags">
+                            <span class="tag" th:each="tag : ${category.tags ?: ''}" th:if="${tag != ''}" th:text="${tag}">security</span>
+                            <!-- Default tags if none exist -->
+                            <span class="tag" th:if="${category.tags == null or category.tags == ''}">security</span>
+                            <span class="tag" th:if="${category.tags == null or category.tags == ''}" 
+                                  th:text="${#strings.toLowerCase(#strings.replace(category.name, ' ', '-'))}">web-security</span>
+                        </div>
+
+                        <div class="category-actions">
+                            <a th:href="@{'/category/' + ${category.id}}" class="btn btn-primary">
+                                <i class="fas fa-arrow-right"></i> Explore
+                                <div class="btn-glow"></div>
+                            </a>
+                            <a th:href="@{'/labs?categoryId=' + ${category.id}}" class="btn btn-secondary">
+                                <i class="fas fa-flask"></i> Labs
+                                <div class="btn-glow"></div>
+                            </a>
+                            <a th:href="@{'/posts?categoryId=' + ${category.id}}" class="btn btn-secondary">
+                                <i class="fas fa-comments"></i> Posts
+                                <div class="btn-glow"></div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List View (Hidden by default) -->
+                <div class="categories-list" id="categoriesList" style="display: none;">
+                    <div class="list-item" th:each="category : ${categories}">
+                        <div class="list-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="list-content">
+                            <div class="list-header">
+                                <h3 th:text="${category.name}">Category Name</h3>
+                                <div class="list-stats">
+                                    <span class="stat" th:text="${category.labCount ?: '0'} + ' Labs'">12 Labs</span>
+                                    <span class="stat" th:text="${category.postCount ?: '0'} + ' Posts'">89 Posts</span>
+                                </div>
+                            </div>
+                            <p class="list-description" th:text="${category.description ?: 'Comprehensive study of ' + category.name + ' techniques.'}">
+                                Category description goes here...
+                            </p>
+                        </div>
+                        <div class="list-actions">
+                            <a th:href="@{'/category/' + ${category.id}}" class="btn btn-primary btn-sm">Explore</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>No Categories Found</h3>
+                    <p>Try adjusting your search terms or filters.</p>
+                    <button class="btn btn-primary" onclick="clearSearch()">
+                        <i class="fas fa-refresh"></i> Clear Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Featured Categories -->
+            <div class="featured-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-star"></i> Featured Categories</h2>
+                    <p>Most popular and beginner-friendly categories</p>
+                </div>
+
+                <div class="featured-grid">
+                    <div class="featured-card" th:each="category : ${categories}" th:if="${categoryState.index < 3}">
+                        <div class="featured-icon">
+                            <i class="fas fa-globe" th:if="${category.name == 'Web Security'}"></i>
+                            <i class="fas fa-network-wired" th:if="${category.name == 'Network Security'}"></i>
+                            <i class="fas fa-key" th:if="${category.name == 'Cryptography'}"></i>
+                            <i class="fas fa-shield-alt" th:unless="${category.name == 'Web Security' or category.name == 'Network Security' or category.name == 'Cryptography'}"></i>
+                        </div>
+                        <div class="featured-content">
+                            <h4 th:text="${category.name}">Web Security</h4>
+                            <p th:text="${category.description ?: 'Perfect for beginners starting their cybersecurity journey.'}">
+                                Perfect for beginners starting their cybersecurity journey.
+                            </p>
+                            <div class="featured-stats">
+                                <span th:text="${category.labCount ?: '0'} + ' Labs'">12 Labs</span>
+                                <span>•</span>
+                                <span>Beginner Friendly</span>
+                            </div>
+                        </div>
+                        <a th:href="@{'/category/' + ${category.id}}" class="featured-btn">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Access -->
+            <div class="quick-access-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-bolt"></i> Quick Access</h2>
+                    <p>Jump to common learning paths</p>
+                </div>
+
+                <div class="quick-access-grid">
+                    <a href="/labs?difficulty=BEGINNER" class="quick-access-item">
+                        <div class="quick-icon">
+                            <i class="fas fa-play"></i>
+                        </div>
+                        <div class="quick-content">
+                            <h4>Beginner Labs</h4>
+                            <p>Start your journey</p>
+                        </div>
+                    </a>
+
+                    <a href="/posts?type=TUTORIAL" class="quick-access-item">
+                        <div class="quick-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="quick-content">
+                            <h4>Tutorials</h4>
+                            <p>Step-by-step guides</p>
+                        </div>
+                    </a>
+
+                    <a href="/leaderboard" class="quick-access-item">
+                        <div class="quick-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="quick-content">
+                            <h4>Leaderboard</h4>
+                            <p>See top performers</p>
+                        </div>
+                    </a>
+
+                    <a href="/posts" class="quick-access-item">
+                        <div class="quick-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="quick-content">
+                            <h4>Community</h4>
+                            <p>Join discussions</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{base :: footer}"></footer>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/base.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('categorySearch');
+            const categoriesGrid = document.getElementById('categoriesGrid');
+            const categoriesList = document.getElementById('categoriesList');
+            const emptyState = document.getElementById('emptyState');
+            const sortSelect = document.getElementById('sortBy');
+
+            searchInput.addEventListener('input', function() {
+                filterCategories();
+            });
+
+            sortSelect.addEventListener('change', function() {
+                sortCategories();
+            });
+
+            // View toggle
+            const viewButtons = document.querySelectorAll('.view-btn');
+            viewButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    viewButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const view = this.dataset.view;
+                    if (view === 'grid') {
+                        categoriesGrid.style.display = 'grid';
+                        categoriesList.style.display = 'none';
+                    } else {
+                        categoriesGrid.style.display = 'none';
+                        categoriesList.style.display = 'block';
+                    }
+                });
+            });
+
+            // Animation on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                    }
+                });
+            }, observerOptions);
+
+            // Observe category cards
+            document.querySelectorAll('.category-card, .featured-card').forEach(card => {
+                observer.observe(card);
+            });
+        });
+
+        function filterCategories() {
+            const searchTerm = document.getElementById('categorySearch').value.toLowerCase();
+            const categoryCards = document.querySelectorAll('.category-card');
+            const listItems = document.querySelectorAll('.list-item');
+            let visibleCount = 0;
+
+            // Filter grid view
+            categoryCards.forEach(card => {
+                const categoryName = card.dataset.category.toLowerCase();
+                const description = card.querySelector('.category-description').textContent.toLowerCase();
+                
+                if (categoryName.includes(searchTerm) || description.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Filter list view
+            listItems.forEach(item => {
+                const categoryName = item.querySelector('h3').textContent.toLowerCase();
+                const description = item.querySelector('.list-description').textContent.toLowerCase();
+                
+                if (categoryName.includes(searchTerm) || description.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Show/hide empty state
+            document.getElementById('emptyState').style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+
+        function sortCategories() {
+            const sortBy = document.getElementById('sortBy').value;
+            const grid = document.getElementById('categoriesGrid');
+            const cards = Array.from(document.querySelectorAll('.category-card'));
+
+            cards.sort((a, b) => {
+                switch(sortBy) {
+                    case 'name':
+                        return a.dataset.category.localeCompare(b.dataset.category);
+                    case 'posts':
+                        const postsA = parseInt(a.querySelector('.stat-item:nth-child(2) span').textContent);
+                        const postsB = parseInt(b.querySelector('.stat-item:nth-child(2) span').textContent);
+                        return postsB - postsA;
+                    case 'labs':
+                        const labsA = parseInt(a.querySelector('.stat-item:nth-child(1) span').textContent);
+                        const labsB = parseInt(b.querySelector('.stat-item:nth-child(1) span').textContent);
+                        return labsB - labsA;
+                    default:
+                        return 0;
+                }
+            });
+
+            // Re-append sorted cards
+            cards.forEach(card => grid.appendChild(card));
+        }
+
+        function clearSearch() {
+            document.getElementById('categorySearch').value = '';
+            filterCategories();
+        }
+    </script>
+</body>
+</html>

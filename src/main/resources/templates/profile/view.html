@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' - CyberLab'}">My Profile - CyberLab</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/profile.css}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js for progress charts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        /* Stili per il tema cyber */
+        .profile-container {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #00ff41;
+            position: relative;
+        }
+        
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        .matrix-cell {
+            position: absolute;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            animation: matrixFall 10s linear infinite;
+        }
+        
+        @keyframes matrixFall {
+            0% { transform: translateY(-100vh); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+        
+        .profile-header {
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .profile-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .profile-avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .avatar-container {
+            position: relative;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #00ff41;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 255, 65, 0.1);
+            overflow: hidden;
+        }
+        
+        .profile-avatar i {
+            font-size: 60px;
+            color: #00ff41;
+        }
+        
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .avatar-status {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 3px solid #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .avatar-status.online { background: #00ff41; }
+        .avatar-status.offline { background: #ff4444; }
+        .avatar-status.away { background: #ffaa00; }
+        
+        .profile-basic-info h1 {
+            color: #00ff41;
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+        
+        .profile-username {
+            color: #888;
+            margin: 5px 0;
+            font-size: 1.2em;
+        }
+        
+        .profile-role {
+            background: linear-gradient(45deg, #00ff41, #00cc33);
+            color: black;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .profile-join-date {
+            color: #ccc;
+            margin: 10px 0;
+        }
+        
+        .profile-quick-stats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .quick-stat {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 10px;
+            min-width: 100px;
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #00ff41;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+        
+        .stat-label {
+            color: #ccc;
+            margin-top: 5px;
+        }
+        
+        .profile-actions .btn {
+            background: linear-gradient(45deg, #00ff41, #00cc33);
+            color: black;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .profile-actions .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.3);
+        }
+        
+        /* ✅ MODIFICATO: Layout originale mantenuto */
+        .profile-content-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .profile-card {
+            background: rgba(0, 255, 65, 0.05);
+            border: 1px solid #00ff41;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+        }
+        
+        .card-header h3 {
+            margin: 0;
+            color: #00ff41;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .profile-info-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(0, 255, 65, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #00ff41;
+        }
+        
+        .profile-info-item i {
+            color: #00ff41;
+            width: 20px;
+            font-size: 1.1em;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #ccc;
+            min-width: 120px;
+        }
+        
+        .info-value {
+            color: #fff;
+            flex: 1;
+        }
+        
+        .role-badge {
+            background: linear-gradient(45deg, #00ff41, #00cc33);
+            color: black;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        /* ✅ MODIFICATO: Bio più grande e prominente */
+        .profile-bio {
+            margin-top: 25px;
+            padding: 25px;
+            background: rgba(0, 255, 65, 0.08);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+        }
+        
+        .profile-bio h4 {
+            color: #00ff41;
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3em;
+        }
+        
+        .profile-bio p {
+            color: #ddd;
+            line-height: 1.6;
+            font-size: 1.05em;
+        }
+        
+        .text-muted {
+            color: #888 !important;
+        }
+        
+        .text-muted a {
+            color: #00ff41;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .text-muted a:hover {
+            text-decoration: underline;
+        }
+        
+        .progress-section {
+            margin-top: 30px;
+        }
+        
+        .progress-chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+        
+        .progress-percentage {
+            position: absolute;
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ff41;
+        }
+        
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .achievement-badge {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+        
+        .achievement-badge.earned {
+            background: rgba(0, 255, 65, 0.1);
+            border-color: #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+        
+        .achievement-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .achievement-badge.earned .achievement-icon {
+            color: #00ff41;
+        }
+        
+        .achievement-name {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        
+        .achievement-badge.earned .achievement-name {
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .recommended-labs {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .mini-lab-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 255, 65, 0.05);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .mini-lab-card:hover {
+            background: rgba(0, 255, 65, 0.1);
+            border-color: #00ff41;
+            transform: translateY(-2px);
+        }
+        
+        .mini-lab-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: #00ff41;
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+        
+        .mini-lab-info {
+            flex: 1;
+        }
+        
+        .mini-lab-info h5 {
+            margin: 0 0 5px 0;
+            color: #fff;
+        }
+        
+        .mini-lab-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+        }
+        
+        .difficulty {
+            color: #00ff41;
+            font-weight: bold;
+        }
+        
+        .time {
+            color: #888;
+        }
+        
+        .mini-lab-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #00ff41;
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .mini-lab-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .profile-content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-avatar-section {
+                flex-direction: column;
+            }
+            
+            .profile-quick-stats {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg">
+        <span th:each="i : ${#numbers.sequence(1, 100)}" class="matrix-cell"></span>
+    </div>
+
+    <!-- Navigation -->
+    <nav th:replace="~{layout/base :: navbar}"></nav>
+
+    <!-- Main Content -->
+    <main class="profile-container" style="padding-top: 160px;">
+        <div class="container">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-header-content">
+                    <!-- Avatar and Basic Info -->
+                    <div class="profile-avatar-section">
+                        <div class="avatar-container">
+                            <div class="profile-avatar">
+                                <!-- ✅ FIXED: Avatar con fallback -->
+                                <i class="fas fa-user" th:if="${user.avatar == null or user.avatar == ''}"></i>
+                                <img th:if="${user.avatar != null and user.avatar != ''}" 
+                                     th:src="@{'/uploads/avatars/' + ${user.avatar}}" 
+                                     th:alt="${user.username + ' avatar'}"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <i class="fas fa-user" style="display: none;"></i>
+                            </div>
+                            <div class="avatar-status" th:classappend="${user.status.name().toLowerCase()}">
+                                <i class="fas fa-circle"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-basic-info">
+                            <h1 class="profile-name" th:text="${user.fullName ?: user.username}">John Doe</h1>
+                            <p class="profile-username">@<span th:text="${user.username}">johndoe</span></p>
+                            <p class="profile-role" th:text="${user.role.name()}">USER</p>
+                            <p class="profile-join-date">
+                                <i class="fas fa-calendar-alt"></i>
+                                Joined <span th:text="${#temporals.format(user.joinDate, 'MMMM yyyy')}">January 2024</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="profile-quick-stats">
+                        <div class="quick-stat">
+                            <div class="stat-number" th:text="${userStats.totalPosts}">42</div>
+                            <div class="stat-label">Posts</div>
+                        </div>
+                        
+                        <div class="quick-stat">
+                            <div class="stat-number" th:text="${userStats.totalComments}">128</div>
+                            <div class="stat-label">Comments</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="profile-actions">
+                        <a th:href="@{/profile/edit}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Content Grid -->
+            <div class="profile-content-grid">
+                <!-- Left Column - About Section (più grande) -->
+                <div class="profile-left-column">
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user-circle"></i> About</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="profile-info-item" th:if="${user.email}">
+                                <i class="fas fa-envelope"></i>
+                                <span class="info-label">Email:</span>
+                                <span class="info-value" th:text="${user.email}">john@example.com</span>
+                            </div>
+                            <div class="profile-info-item" th:if="${user.fullName != user.username}">
+                                <i class="fas fa-id-card"></i>
+                                <span class="info-label">Full Name:</span>
+                                <span class="info-value" th:text="${user.fullName}">John Doe</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <span class="info-label">Role:</span>
+                                <span class="info-value role-badge" th:classappend="${user.role.name().toLowerCase()}" th:text="${user.role.name()}">USER</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <i class="fas fa-calendar-check"></i>
+                                <span class="info-label">Member since:</span>
+                                <span class="info-value" th:text="${#temporals.format(user.joinDate, 'dd MMMM yyyy')}">15 January 2024</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <i class="fas fa-clock"></i>
+                                <span class="info-label">Total Time:</span>
+                                <span class="info-value" th:text="${userStats.totalTimeSpentFormatted}">42h 30min</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <i class="fas fa-trophy"></i>
+                                <span class="info-label">Labs Completed:</span>
+                                <span class="info-value" th:text="${userStats.completedLabs}">8</span>
+                            </div>
+                            
+                            <!-- Bio/Profile Info -->
+                            <div class="profile-bio" th:if="${user.profileInfo}">
+                                <h4><i class="fas fa-quote-left"></i> Bio</h4>
+                                <p th:text="${user.profileInfo}">Passionate cybersecurity enthusiast learning ethical hacking techniques...</p>
+                            </div>
+                            <div class="profile-bio" th:unless="${user.profileInfo}">
+                                <h4><i class="fas fa-info-circle"></i> Bio</h4>
+                                <p class="text-muted">No bio added yet. <a th:href="@{/profile/edit}">Add one now</a> to tell others about yourself, your interests, and your cybersecurity journey.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Empty (Recent Activity removed) -->
+                <div class="profile-right-column">
+                    <!-- Empty space where Recent Activity was -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize matrix background
+            const matrixCells = document.querySelectorAll('.matrix-cell');
+            matrixCells.forEach((cell, index) => {
+                cell.style.left = Math.random() * 100 + '%';
+                cell.style.animationDelay = Math.random() * 10 + 's';
+                cell.textContent = String.fromCharCode(0x30A0 + Math.random() * 96);
+            });
+
+            // Add hover effects to cards
+            const cards = document.querySelectorAll('.profile-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.boxShadow = '0 10px 30px rgba(0, 255, 65, 0.2)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

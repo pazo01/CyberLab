@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberLab - Create Account</title>
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body>
+    <!-- Matrix Background Animation -->
+    <section class="matrix-background">
+        <!-- Generate matrix cells -->
+        <span th:each="i : ${#numbers.sequence(1, 300)}" class="matrix-cell"></span>
+        
+        <!-- Register Form Container -->
+        <div class="auth-container">
+            <div class="auth-content">
+                <div class="auth-header">
+                    <h2>Join CyberLab</h2>
+                    <p>Create Your Security Account</p>
+                </div>
+                
+                <!-- Register Form -->
+                <form class="auth-form register-form" method="post" th:action="@{/register}" th:object="${user}">
+                    <!-- Error Messages -->
+                    <div th:if="${#fields.hasErrors('*')}" class="alert alert-error">
+                        <i class="icon-alert"></i>
+                        <span>Please fix the errors below</span>
+                    </div>
+                    
+                    <!-- Success Messages -->
+                    <div th:if="${success}" class="alert alert-success">
+                        <i class="icon-check"></i>
+                        <span th:text="${success}">Registration successful!</span>
+                    </div>
+                    
+                    <!-- General Error -->
+                    <div th:if="${error}" class="alert alert-error">
+                        <i class="icon-alert"></i>
+                        <span th:text="${error}">Registration failed</span>
+                    </div>
+                    
+                    <!-- Username Field -->
+                    <div class="input-box">
+                        <input type="text" 
+                               th:field="*{username}" 
+                               required 
+                               autocomplete="username"
+                               th:class="${#fields.hasErrors('username')} ? 'error' : ''"
+                               pattern="[a-zA-Z0-9_]{3,50}"
+                               title="Username must be 3-50 characters, letters, numbers and underscores only">
+                        <label>Username</label>
+                        <div class="input-line"></div>
+                        <div th:if="${#fields.hasErrors('username')}" class="field-error">
+                            <span th:errors="*{username}">Username error</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Email Field -->
+                    <div class="input-box">
+                        <input type="email" 
+                               th:field="*{email}" 
+                               required 
+                               autocomplete="email"
+                               th:class="${#fields.hasErrors('email')} ? 'error' : ''">
+                        <label>Email Address</label>
+                        <div class="input-line"></div>
+                        <div th:if="${#fields.hasErrors('email')}" class="field-error">
+                            <span th:errors="*{email}">Email error</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Name Field -->
+                    <div class="input-box">
+                        <input type="text" 
+                               th:field="*{name}" 
+                               autocomplete="given-name"
+                               th:class="${#fields.hasErrors('name')} ? 'error' : ''">
+                        <label>First Name (Optional)</label>
+                        <div class="input-line"></div>
+                    </div>
+                    
+                    <!-- Surname Field -->
+                    <div class="input-box">
+                        <input type="text" 
+                               th:field="*{surname}" 
+                               autocomplete="family-name"
+                               th:class="${#fields.hasErrors('surname')} ? 'error' : ''">
+                        <label>Last Name (Optional)</label>
+                        <div class="input-line"></div>
+                    </div>
+                    
+                    <!-- Password Field -->
+                    <div class="input-box">
+                        <input type="password" 
+                               th:field="*{password}" 
+                               required 
+                               autocomplete="new-password"
+                               th:class="${#fields.hasErrors('password')} ? 'error' : ''"
+                               id="password"
+                               minlength="8">
+                        <label>Password</label>
+                        <div class="input-line"></div>
+                        
+                        <!-- Password Strength Indicator -->
+                        <div class="password-strength" id="passwordStrength">
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                        </div>
+                        
+                        <!-- Password Requirements -->
+                        <div class="password-requirements">
+                            <div class="requirement" id="length">At least 8 characters</div>
+                            <div class="requirement" id="uppercase">One uppercase letter</div>
+                            <div class="requirement" id="lowercase">One lowercase letter</div>
+                            <div class="requirement" id="number">One number</div>
+                        </div>
+                        
+                        <div th:if="${#fields.hasErrors('password')}" class="field-error">
+                            <span th:errors="*{password}">Password error</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Confirm Password Field -->
+                    <div class="input-box">
+                        <input type="password" 
+                               th:field="*{confirmPassword}" 
+                               required 
+                               autocomplete="new-password"
+                               th:class="${#fields.hasErrors('confirmPassword')} ? 'error' : ''"
+                               id="confirmPassword">
+                        <label>Confirm Password</label>
+                        <div class="input-line"></div>
+                        <div th:if="${#fields.hasErrors('confirmPassword')}" class="field-error">
+                            <span th:errors="*{confirmPassword}">Password confirmation error</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms Checkbox -->
+                    <div class="checkbox-container">
+                        <label class="checkbox-label">
+                            <input type="checkbox" required id="terms">
+                            <span class="checkmark"></span>
+                            I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
+                        </label>
+                    </div>
+                    
+                    <!-- Auth Links -->
+                    <div class="auth-links">
+                        <a href="/login" class="link-secondary">
+                            <i class="icon-arrow-left"></i>
+                            Already have an account?
+                        </a>
+                        <a href="/forgot-password" class="link-primary">
+                            <i class="icon-key"></i>
+                            Need Help?
+                        </a>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="input-box">
+                        <button type="submit" class="btn-auth">
+                            <span>Create Account</span>
+                            <i class="icon-user-plus"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Security Notice -->
+                <div class="security-notice">
+                    <i class="icon-shield"></i>
+                    <p>Your data is encrypted and secure. Welcome to the CyberLab community.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Animated Background Elements -->
+        <div class="floating-elements">
+            <div class="floating-code" data-text="#!/bin/bash"></div>
+            <div class="floating-code" data-text="import hashlib"></div>
+            <div class="floating-code" data-text="bcrypt.hash()"></div>
+            <div class="floating-code" data-text="RSA-2048"></div>
+            <div class="floating-code" data-text="AES-256"></div>
+        </div>
+    </section>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize matrix background
+            initMatrixBackground();
+            
+            // Password strength checker
+            initPasswordStrength();
+            
+            // Real-time validation
+            initRealTimeValidation();
+            
+            // Auto-focus first input
+            const firstInput = document.querySelector('.input-box input');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

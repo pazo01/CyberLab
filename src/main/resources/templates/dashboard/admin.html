@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CyberLab</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- STOP ALL ANIMATIONS -->
+    <style>
+        *, *::before, *::after {
+            animation-duration: 0s !important;
+            animation-delay: 0s !important;
+            transition-duration: 0s !important;
+            transition-delay: 0s !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-admin">
+        <div class="container">
+            <div class="navbar-content">
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab <span class="badge badge-admin">ADMIN</span>
+                </a>
+                
+                <ul class="navbar-nav">
+                    <li><a th:href="@{/}" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a th:href="@{/admin/dashboard}" class="nav-link active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a th:href="@{/admin/users}" class="nav-link"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-file-alt"></i> Posts</a></li>
+                    <li><a th:href="@{/admin/reports}" class="nav-link">
+                        <i class="fas fa-flag"></i> Reports
+                        <span class="notification-badge" th:if="${pendingReports > 0}" th:text="${pendingReports}">5</span>
+                    </a></li>
+                    
+                    <!-- Admin User Menu -->
+                    <li class="user-menu">
+                        <div class="user-dropdown">
+                            <button class="user-btn admin-btn">
+                                <i class="fas fa-user-shield"></i>
+                                <span th:text="${#authentication.name}">Admin</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Dashboard Content -->
+    <div class="admin-dashboard">
+        <div class="container">
+            <!-- Header -->
+            <div class="admin-header">
+                <h1>Admin Control Panel</h1>
+                <p>System overview and management tools</p>
+            </div>
+
+            <!-- System Stats -->
+            <div class="stats-grid admin-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <span class="stat-number" th:text="${stats.totalUsers}">0</span>
+                    <span class="stat-label">Total Users</span>
+                    <div class="stat-change" th:classappend="${stats.newUsersToday > 0 ? 'positive' : ''}">
+                        <i class="fas fa-user-plus"></i>
+                        <span th:text="${stats.newUsersToday + ' today'}">0 today</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <span class="stat-number" th:text="${stats.totalLabs}">0</span>
+                    <span class="stat-label">Active Labs</span>
+                    <div class="stat-change">
+                        <i class="fas fa-check-circle"></i>
+                        <span th:text="${stats.totalCompletions + ' completions'}">0 completions</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <span class="stat-number" th:text="${stats.totalPosts}">0</span>
+                    <span class="stat-label">Community Posts</span>
+                    <div class="stat-change" th:classappend="${stats.postsToday > 0 ? 'positive' : ''}">
+                        <i class="fas fa-pen"></i>
+                        <span th:text="${stats.postsToday + ' today'}">0 today</span>
+                    </div>
+                </div>
+
+                <div class="stat-card alert-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-flag"></i>
+                    </div>
+                    <span class="stat-number" th:text="${stats.pendingReports}">0</span>
+                    <span class="stat-label">Pending Reports</span>
+                    <div class="stat-change negative">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Requires attention</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Grid -->
+            <div class="admin-grid">
+                <!-- Activity Chart -->
+                <div class="admin-section chart-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-area"></i> Platform Activity</h2>
+                        <select id="chartRange" class="chart-filter">
+                            <option value="7">Last 7 days</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Reports -->
+                <div class="admin-section reports-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-flag"></i> Recent Reports</h2>
+                        <a th:href="@{/admin/reports}" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    
+                    <div class="reports-list">
+                        <div class="report-item" th:each="report : ${recentReports}">
+                            <div class="report-header">
+                               <span class="report-type" th:classappend="${report.reportType.toLowerCase()}">
+                                    <i th:switch="${report.reportType}">
+                                        <i th:case="'POST'" class="fas fa-file-alt"></i>
+                                        <i th:case="'COMMENT'" class="fas fa-comment"></i>
+                                        <i th:case="'USER'" class="fas fa-user"></i>
+                                        <i th:case="*" class="fas fa-flag"></i>
+                                    </i>
+                                    <span th:text="${report.reportType}">COMMENT</span>
+                                </span>
+                               <span class="report-time" th:text="${report.timeSinceCreated}">5 min ago</span>
+                            </div>
+                            <p class="report-reason" th:text="${report.reason.displayName}">Inappropriate content in post</p>
+                            <div class="report-meta">
+                                <span>Reported by: <strong th:text="${report.reportedBy.username}">user123</strong></span>
+                                <span>Target: <strong th:text="${report.reportedContent}">Post #45</strong></span>
+                            </div>
+                            <div class="report-actions">
+                                <button class="btn btn-sm btn-primary" th:onclick="'reviewReport(' + ${report.id} + ')'">
+                                    <i class="fas fa-eye"></i> Review
+                                </button>
+                                <button class="btn btn-sm btn-danger" th:onclick="'dismissReport(' + ${report.id} + ')'">
+                                    <i class="fas fa-times"></i> Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management -->
+                <div class="admin-section users-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> User Management</h2>
+                        <a th:href="@{/admin/users}" class="view-all">Manage Users <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    
+                    <!-- New Users -->
+                    <div class="subsection">
+                        <h3>New Users</h3>
+                        <div class="user-list">
+                            <div class="user-item" th:each="user : ${newUsers}">
+                                <div class="user-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="user-info">
+                                    <span class="username" th:text="${user.username}">newuser</span>
+                                    <span class="user-email" th:text="${user.email}">user@example.com</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Stats -->
+                    <div class="user-stats-grid">
+                        <div class="mini-stat">
+                            <span class="mini-stat-value" th:text="${stats.activeUsers}">0</span>
+                            <span class="mini-stat-label">Active Today</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-value" th:text="${stats.bannedUsers}">0</span>
+                            <span class="mini-stat-label">Banned</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="admin-section quick-actions-section">
+                    <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                    <div class="admin-actions">
+                        <a th:href="@{/admin/categories}" class="action-btn" style="text-decoration: none;">
+                            <i class="fas fa-tag"></i>
+                            <span>Manage Categories</span>
+                        </a>
+                       
+                        <button class="action-btn" onclick="clearCache()">
+                            <i class="fas fa-sync"></i>
+                            <span>Clear Cache</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
+    <script>
+        // JavaScript functions for admin actions
+        function reviewReport(reportId) {
+            window.location.href = '/reports/' + reportId;
+        }
+
+        function dismissReport(reportId) {
+            if (confirm('Are you sure you want to dismiss this report?')) {
+                fetch('/reports/' + reportId + '/dismiss', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || ''
+                    },
+                    body: 'notes=Dismissed from admin dashboard'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Network response was not ok');
+                    }
+                })
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Report dismissed successfully', 'success');
+                        location.reload();
+                    } else {
+                        showNotification('Error: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error dismissing report', 'error');
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        function viewUser(userId) {
+            window.location.href = '/admin/users/' + userId;
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = 'notification ' + type;
+            notification.textContent = message;
+            notification.style.cssText = 
+                'position: fixed; top: 20px; right: 20px; padding: 15px; border-radius: 5px; color: white; z-index: 1000; background-color: ' + 
+                (type === 'success' ? '#28a745' : '#dc3545') + ';';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function clearCache() {
+            if (confirm('Are you sure you want to clear the cache?')) {
+                // Implementa la logica per pulire la cache
+                console.log('Clearing cache...');
+                showNotification('Cache cleared successfully', 'success');
+            }
+        }
+    </script>
+    <script th:inline="javascript">
+        // Pass data to JavaScript
+        const adminStats = /*[[${stats}]]*/ {};
+        const chartData = /*[[${chartData}]]*/ {};
+        
+        // Initialize admin dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initAdminDashboard === 'function') {
+                initAdminDashboard(adminStats, chartData);
+            }
+        });
+    </script>
+</body>
+</html>

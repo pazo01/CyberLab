@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberLab - Login</title>
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body>
+    <!-- Matrix Background Animation -->
+    <section class="matrix-background">
+        <!-- Generate matrix cells with Thymeleaf -->
+        <span th:each="i : ${#numbers.sequence(1, 300)}" class="matrix-cell"></span>
+        
+        <!-- Login Form Container -->
+        <div class="auth-container">
+            <div class="auth-content">
+                <div class="auth-header">
+                    <h2>CyberLab</h2>
+                    <p>Secure Access Terminal</p>
+                </div>
+                
+                <!-- Login Form -->
+                <form class="auth-form" method="post" th:action="@{/authenticate}">
+                    <!-- Error Messages -->
+                    <div th:if="${error}" class="alert alert-error">
+                        <i class="icon-alert"></i>
+                        <span th:text="${error}">Invalid credentials</span>
+                    </div>
+                    
+                    <!-- Success Messages -->
+                    <div th:if="${success}" class="alert alert-success">
+                        <i class="icon-check"></i>
+                        <span th:text="${success}">Registration successful!</span>
+                    </div>
+                    
+                    <!-- Logout Message -->
+                    <div th:if="${message}" class="alert alert-info">
+                        <i class="icon-info"></i>
+                        <span th:text="${message}">Logged out successfully</span>
+                    </div>
+                    
+                    <!-- Username Field -->
+                    <div class="input-box">
+                        <input type="text" name="username" required autocomplete="username">
+                        <label>Username or Email</label>
+                        <div class="input-line"></div>
+                    </div>
+                    
+                    <!-- Password Field -->
+                    <div class="input-box">
+                        <input type="password" name="password" required autocomplete="current-password">
+                        <label>Password</label>
+                        <div class="input-line"></div>
+                    </div>
+                    
+                    <!-- Remember Me -->
+                    <div class="checkbox-container">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="remember-me">
+                            <span class="checkmark"></span>
+                            Remember me for 7 days
+                        </label>
+                    </div>
+                    
+                    <!-- Auth Links -->
+                    <div class="auth-links">
+                        <a href="/forgot-password" class="link-secondary">
+                            <i class="icon-key"></i>
+                            Forgot Password?
+                        </a>
+                        <a href="/register" class="link-primary">
+                            <i class="icon-user-plus"></i>
+                            Create Account
+                        </a>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="input-box">
+                        <button type="submit" class="btn-auth">
+                            <span>Access System</span>
+                            <i class="icon-arrow-right"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Hidden Redirect Field -->
+                    <input type="hidden" name="redirect" th:value="${redirect}">
+                </form>
+                
+                <!-- Security Notice -->
+                <div class="security-notice">
+                    <i class="icon-shield"></i>
+                    <p>Secure connection established. All data encrypted.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Animated Background Elements -->
+        <div class="floating-elements">
+            <div class="floating-code" data-text="&lt;script&gt;"></div>
+            <div class="floating-code" data-text="SELECT * FROM"></div>
+            <div class="floating-code" data-text="../../../etc/passwd"></div>
+            <div class="floating-code" data-text="0x41414141"></div>
+            <div class="floating-code" data-text="XOR CIPHER"></div>
+        </div>
+    </section>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        // Matrix animation and form enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize matrix background
+            initMatrixBackground();
+            
+            // Enhance form inputs
+            enhanceFormInputs();
+            
+            // Auto-focus first input
+            const firstInput = document.querySelector('.input-box input');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

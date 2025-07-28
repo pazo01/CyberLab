@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle + ' - CyberLab'}">Edit Post - CyberLab</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/posts.css}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg">
+        <span th:each="i : ${#numbers.sequence(1, 100)}" class="matrix-cell"></span>
+    </div>
+
+    <!-- Navigation -->
+    <nav th:replace="~{layout/base :: navbar}"></nav>
+
+    <!-- Main Content -->
+    <main class="create-post-container" style="padding-top: 10rem;">
+        <div class="container">
+            <!-- Header pulito senza elementi fluttuanti -->
+            <div class="page-header matrix-header" style="margin-top: 2rem;">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1 class="glitch-text" data-text="Edit Post">
+                            <i class="fas fa-edit"></i> Edit Post
+                        </h1>
+                        <div class="header-subtitle-section" style="margin-top: 1.5rem;">
+                            <span class="hero-subtitle">Update your post content and settings</span>
+                            <p class="hero-description">Modify your post to keep your content fresh and engaging for the community.</p>
+                        </div>
+                    </div>
+                    <div class="header-visual">
+                        <!-- Navigation Actions -->
+                        <div class="header-actions">
+                            <a th:href="@{'/posts/' + ${postId}}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Post
+                                <span class="btn-glow"></span>
+                            </a>
+                            <a th:href="@{/posts}" class="btn btn-secondary">
+                                <i class="fas fa-list"></i> All Posts
+                                <span class="btn-glow"></span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- RIMOSSI gli elementi floating-code che causavano il problema -->
+            </div>
+
+            <!-- Edit Form Grid -->
+            <div class="form-grid">
+                <!-- Main Form Card -->
+                <div class="post-form">
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-pencil-alt"></i> Post Editor</h3>
+                            <div class="view-options">
+                               
+                            </div>
+                        </div>
+                        
+                        <form th:action="@{'/posts/' + ${postId} + '/edit'}" method="post" id="editPostForm" class="profile-form">
+                            <!-- Title Section -->
+                            <div class="form-group">
+                                <label for="title" class="form-label">
+                                    <i class="fas fa-heading"></i> Post Title
+                                </label>
+                                <input type="text" id="title" name="title" class="form-input" 
+                                       th:value="${post.title}" required maxlength="200"
+                                       placeholder="Enter an engaging title for your post">
+                                <div class="char-counter">
+                                    <span id="titleCount">0</span> / 200 characters
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Editor Section -->
+                            <div class="form-group">
+                                <label for="content" class="form-label">
+                                    <i class="fas fa-file-code"></i> Content Editor
+                                </label>
+                                
+                                <!-- Enhanced Toolbar -->
+                                <div class="editor-toolbar">
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('**', '**')" title="Bold">
+                                        <i class="fas fa-bold"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('*', '*')" title="Italic">
+                                        <i class="fas fa-italic"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('`', '`')" title="Code">
+                                        <i class="fas fa-code"></i>
+                                    </button>
+                                    <div class="editor-separator"></div>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('```\n', '\n```')" title="Code Block">
+                                        <i class="fas fa-file-code"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('[', '](url)')" title="Link">
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('# ', '')" title="Heading">
+                                        <i class="fas fa-heading"></i>
+                                    </button>
+                                    <div class="editor-separator"></div>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('- ', '')" title="List">
+                                        <i class="fas fa-list-ul"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('> ', '')" title="Quote">
+                                        <i class="fas fa-quote-left"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="insertMarkdown('![alt](image-url)', '')" title="Image">
+                                        <i class="fas fa-image"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="editor-container">
+                                    <textarea id="content" name="content" class="form-input editor-textarea" rows="15" 
+                                              required minlength="10" placeholder="Write your post content here... (Markdown supported)"
+                                              th:text="${post.content}"></textarea>
+                                </div>
+                                
+                                <div class="editor-footer">
+                                    <div class="char-counter">
+                                        <span id="contentCount">0</span> characters
+                                    </div>
+                                    <div class="editor-help">
+                                        <i class="fab fa-markdown"></i> Markdown supported • 
+                                        <i class="fas fa-save"></i> Auto-saving enabled
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Settings Row -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="categoryId" class="form-label">
+                                        <i class="fas fa-folder"></i> Category
+                                    </label>
+                                    <select id="categoryId" name="categoryId" class="form-input" required>
+                                        <option value="">Select a category</option>
+                                        <option th:each="category : ${categories}" 
+                                                th:value="${category.id}" 
+                                                th:text="${category.name}"
+                                                th:selected="${category.id == post.categoryId}">
+                                            Category Name
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="postType" class="form-label">
+                                        <i class="fas fa-tag"></i> Post Type
+                                    </label>
+                                    <select id="postType" name="postType" class="form-input">
+                                        <option th:each="type : ${postTypes}" 
+                                                th:value="${type}" 
+                                                th:text="${type.name()}"
+                                                th:selected="${type == post.postType}">
+                                            Post Type
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Tags Section -->
+                            <div class="form-group">
+                                <label for="tags" class="form-label">
+                                    <i class="fas fa-tags"></i> Tags
+                                </label>
+                                <input type="text" id="tags" name="tags" class="form-input" 
+                                       th:value="${post.tags}" placeholder="security, xss, tutorial, ctf...">
+                                <div class="help-text">
+                                    <i class="fas fa-lightbulb"></i> 
+                                    Separate tags with commas. Good tags help users discover your content.
+                                </div>
+                                <div id="tagSuggestions" class="tags-display" style="display: none;"></div>
+                                
+                                <!-- Current Tags Display -->
+                                <div id="currentTags" class="tags-display" style="margin-top: 10px;"></div>
+                            </div>
+
+                            <!-- Enhanced Form Actions -->
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Post
+                                    <span class="btn-glow"></span>
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="fas fa-undo"></i> Reset Changes
+                                    <span class="btn-glow"></span>
+                                </button>
+                                <a th:href="@{'/posts/' + ${postId}}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                    <span class="btn-glow"></span>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Enhanced Sidebar -->
+                <div class="form-sidebar">
+                    <!-- Formatting Help -->
+                    <div class="profile-card formatting-help">
+                        <div class="card-header">
+                            <h3><i class="fab fa-markdown"></i> Formatting Guide</h3>
+                        </div>
+                        <div class="help-content">
+                            <div class="help-item">
+                                <span><strong>**bold**</strong></span>
+                                <span><strong>Bold text</strong></span>
+                            </div>
+                            <div class="help-item">
+                                <span><em>*italic*</em></span>
+                                <span><em>Italic text</em></span>
+                            </div>
+                            <div class="help-item">
+                                <span>`code`</span>
+                                <span><code>Inline code</code></span>
+                            </div>
+                            <div class="help-item">
+                                <span>```<br>code block<br>```</span>
+                                <span>Code block</span>
+                            </div>
+                            <div class="help-item">
+                                <span># Heading</span>
+                                <span><strong>Large heading</strong></span>
+                            </div>
+                            <div class="help-item">
+                                <span>> Quote</span>
+                                <span><em>Blockquote</em></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guidelines -->
+                    <div class="profile-card guidelines-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shield-alt"></i> Guidelines</h3>
+                        </div>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Keep content relevant to cybersecurity</li>
+                            <li><i class="fas fa-check"></i> Use clear, descriptive titles</li>
+                            <li><i class="fas fa-check"></i> Add appropriate tags for discovery</li>
+                            <li><i class="fas fa-check"></i> Include code examples when helpful</li>
+                            <li><i class="fas fa-check"></i> Be respectful and constructive</li>
+                            <li><i class="fas fa-check"></i> Test your code before sharing</li>
+                        </ul>
+                    </div>
+
+                    <!-- Save Status -->
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-cloud"></i> Save Status</h3>
+                        </div>
+                        <div class="save-status">
+                            <div class="status-indicator" id="saveStatus">
+                                <i class="fas fa-clock"></i>
+                                <span>Not saved</span>
+                            </div>
+                            <div class="auto-save-info">
+                                <i class="fas fa-info-circle"></i>
+                                Auto-save every 30 seconds
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Preview Panel -->
+            <div id="previewPanel" class="profile-card preview-panel" style="display: none;">
+                <div class="card-header">
+                    <h3><i class="fas fa-eye"></i> Live Preview</h3>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closePreview()">
+                        <i class="fas fa-times"></i> Close Preview
+                    </button>
+                </div>
+                <div class="preview-content">
+                    <div class="preview-post">
+                        <div class="post-header">
+                            <h1 id="previewTitle">Post Title</h1>
+                            <div class="post-meta">
+                                <span class="post-author">
+                                    <i class="fas fa-user"></i> <span sec:authentication="name">You</span>
+                                </span>
+                                <span class="post-date">
+                                    <i class="fas fa-calendar"></i> Now
+                                </span>
+                                <span class="post-category">
+                                    <i class="fas fa-folder"></i> <span id="previewCategory">Category</span>
+                                </span>
+                                <span class="post-type">
+                                    <i class="fas fa-tag"></i> <span id="previewType">Type</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="post-body" id="previewContent">
+                            Post content will appear here...
+                        </div>
+                        <div class="post-tags" id="previewTags">
+                            <!-- Tags will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/base.js}"></script>
+    <script th:src="@{/js/posts.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enhanced Character Counters
+            const titleInput = document.getElementById('title');
+            const contentTextarea = document.getElementById('content');
+            const titleCount = document.getElementById('titleCount');
+            const contentCount = document.getElementById('contentCount');
+
+            function updateTitleCount() {
+                const count = titleInput.value.length;
+                titleCount.textContent = count;
+                const counterElement = titleCount.parentElement;
+                
+                if (count > 180) {
+                    counterElement.className = 'char-counter warning';
+                } else if (count > 150) {
+                    counterElement.className = 'char-counter';
+                } else {
+                    counterElement.className = 'char-counter';
+                }
+            }
+
+            function updateContentCount() {
+                const count = contentTextarea.value.length;
+                contentCount.textContent = count.toLocaleString();
+            }
+
+            titleInput.addEventListener('input', updateTitleCount);
+            contentTextarea.addEventListener('input', updateContentCount);
+
+            // Initial counts
+            updateTitleCount();
+            updateContentCount();
+
+            // Enhanced Tag System
+            initializeTagSystem();
+
+            // Enhanced Auto-save with visual feedback
+            let autoSaveInterval = setInterval(saveDraft, 30000);
+            
+            // Form change detection
+            let formChanged = false;
+            const form = document.getElementById('editPostForm');
+            
+            form.addEventListener('input', () => {
+                formChanged = true;
+                updateSaveStatus('unsaved');
+            });
+            
+            // Prevent leaving with unsaved changes
+            window.addEventListener('beforeunload', (e) => {
+                if (formChanged) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+            
+            form.addEventListener('submit', () => {
+                formChanged = false;
+                updateSaveStatus('saving');
+            });
+
+            // Initialize current tags display
+            updateTagsDisplay();
+        });
+
+        // Enhanced Tag System
+        function initializeTagSystem() {
+            const tagsInput = document.getElementById('tags');
+            const suggestionsDiv = document.getElementById('tagSuggestions');
+            
+            const commonTags = [
+                'security', 'hacking', 'tutorial', 'xss', 'sqli', 'ctf', 
+                'pentest', 'vulnerability', 'exploit', 'forensics', 'osint',
+                'malware', 'networking', 'cryptography', 'social-engineering',
+                'web-security', 'mobile-security', 'wireless', 'reverse-engineering'
+            ];
+            
+            tagsInput.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                const lastTag = value.split(',').pop().trim();
+                
+                if (lastTag.length > 1) {
+                    const suggestions = commonTags.filter(tag => 
+                        tag.includes(lastTag) && !value.includes(tag)
+                    ).slice(0, 5);
+                    
+                    if (suggestions.length > 0) {
+                        suggestionsDiv.innerHTML = suggestions.map(tag => 
+                            `<span class="tag tag-suggestion" onclick="addTag('${tag}')">${tag}</span>`
+                        ).join('');
+                        suggestionsDiv.style.display = 'block';
+                    } else {
+                        suggestionsDiv.style.display = 'none';
+                    }
+                } else {
+                    suggestionsDiv.style.display = 'none';
+                }
+                
+                updateTagsDisplay();
+            });
+        }
+
+        function updateTagsDisplay() {
+            const tagsInput = document.getElementById('tags');
+            const currentTagsDiv = document.getElementById('currentTags');
+            
+            const tags = tagsInput.value.split(',')
+                .map(t => t.trim())
+                .filter(t => t.length > 0);
+            
+            if (tags.length > 0) {
+                currentTagsDiv.innerHTML = tags.map(tag => 
+                    `<span class="tag">
+                        ${tag} 
+                        <span class="remove" onclick="removeTag('${tag}')">×</span>
+                    </span>`
+                ).join('');
+                currentTagsDiv.style.display = 'block';
+            } else {
+                currentTagsDiv.style.display = 'none';
+            }
+        }
+
+        function addTag(tag) {
+            const tagsInput = document.getElementById('tags');
+            const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+            
+            if (!currentTags.includes(tag)) {
+                currentTags.push(tag);
+                tagsInput.value = currentTags.join(', ');
+                updateTagsDisplay();
+            }
+            
+            document.getElementById('tagSuggestions').style.display = 'none';
+        }
+
+        function removeTag(tagToRemove) {
+            const tagsInput = document.getElementById('tags');
+            const currentTags = tagsInput.value.split(',')
+                .map(t => t.trim())
+                .filter(t => t !== tagToRemove);
+            
+            tagsInput.value = currentTags.join(', ');
+            updateTagsDisplay();
+        }
+
+        // Enhanced Markdown Editor
+        function insertMarkdown(start, end) {
+            const textarea = document.getElementById('content');
+            const startPos = textarea.selectionStart;
+            const endPos = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(startPos, endPos);
+            
+            const replacement = start + selectedText + end;
+            textarea.value = textarea.value.substring(0, startPos) + replacement + textarea.value.substring(endPos);
+            
+            const newPos = startPos + start.length + selectedText.length;
+            textarea.setSelectionRange(newPos, newPos);
+            textarea.focus();
+            
+            document.getElementById('contentCount').textContent = textarea.value.length.toLocaleString();
+        }
+
+        // Enhanced Preview
+        function previewPost() {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const tags = document.getElementById('tags').value;
+            const categorySelect = document.getElementById('categoryId');
+            const typeSelect = document.getElementById('postType');
+            
+            const selectedCategory = categorySelect.options[categorySelect.selectedIndex].text;
+            const selectedType = typeSelect.options[typeSelect.selectedIndex].text;
+
+            // Update preview content
+            document.getElementById('previewTitle').textContent = title || 'Untitled Post';
+            document.getElementById('previewCategory').textContent = 
+                selectedCategory !== 'Select a category' ? selectedCategory : 'Uncategorized';
+            document.getElementById('previewType').textContent = selectedType || 'Discussion';
+            
+            // Enhanced markdown parsing
+            let htmlContent = content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
+                .replace(/^\- (.*$)/gim, '<li>$1</li>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+                .replace(/\n/g, '<br>');
+            
+            // Wrap lists
+            htmlContent = htmlContent.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+            
+            document.getElementById('previewContent').innerHTML = htmlContent || '<em>No content to preview...</em>';
+            
+            // Update tags
+            const tagsArray = tags.split(',').map(t => t.trim()).filter(t => t);
+            const tagsHtml = tagsArray.map(tag => `<span class="tag">${tag}</span>`).join('');
+            document.getElementById('previewTags').innerHTML = tagsHtml;
+            
+            // Show preview panel with animation
+            const previewPanel = document.getElementById('previewPanel');
+            previewPanel.style.display = 'block';
+            setTimeout(() => {
+                previewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function closePreview() {
+            document.getElementById('previewPanel').style.display = 'none';
+        }
+
+        // Enhanced Auto-save with status (modificato per non usare localStorage)
+        function saveDraft() {
+            updateSaveStatus('saving');
+            
+            // Simula il salvataggio senza localStorage
+            setTimeout(() => {
+                updateSaveStatus('saved');
+                formChanged = false;
+            }, 1000);
+        }
+
+        function updateSaveStatus(status) {
+            const statusElement = document.getElementById('saveStatus');
+            
+            switch(status) {
+                case 'unsaved':
+                    statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Unsaved changes</span>';
+                    statusElement.className = 'status-indicator warning';
+                    break;
+                case 'saving':
+                    statusElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Saving...</span>';
+                    statusElement.className = 'status-indicator saving';
+                    break;
+                case 'saved':
+                    statusElement.innerHTML = '<i class="fas fa-check"></i> <span>Saved</span>';
+                    statusElement.className = 'status-indicator saved';
+                    break;
+                default:
+                    statusElement.innerHTML = '<i class="fas fa-clock"></i> <span>Not saved</span>';
+                    statusElement.className = 'status-indicator';
+            }
+        }
+
+        function resetForm() {
+            if (confirm('Are you sure you want to reset all changes? This will restore the original post content.')) {
+                document.getElementById('editPostForm').reset();
+                updateTitleCount();
+                updateContentCount();
+                updateTagsDisplay();
+                updateSaveStatus('reset');
+                
+                showNotification('Form reset to original values', 'info');
+            }
+        }
+
+        // Enhanced Notifications
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification show ${type}`;
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <span class="notification-title">
+                        <i class="fas ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-times' : 'fa-info'}"></i>
+                        ${type.charAt(0).toUpperCase() + type.slice(1)}
+                    </span>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="notification-body">${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Enhanced Form Validation
+        document.getElementById('editPostForm').addEventListener('submit', function(e) {
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+            const categoryId = document.getElementById('categoryId').value;
+            
+            if (!title) {
+                e.preventDefault();
+                showNotification('Please enter a title for your post', 'error');
+                document.getElementById('title').focus();
+                return;
+            }
+            
+            if (title.length < 5) {
+                e.preventDefault();
+                showNotification('Title must be at least 5 characters long', 'error');
+                document.getElementById('title').focus();
+                return;
+            }
+            
+            if (!content || content.length < 10) {
+                e.preventDefault();
+                showNotification('Content must be at least 10 characters long', 'error');
+                document.getElementById('content').focus();
+                return;
+            }
+            
+            if (!categoryId) {
+                e.preventDefault();
+                showNotification('Please select a category', 'error');
+                document.getElementById('categoryId').focus();
+                return;
+            }
+            
+            // Show success feedback
+            updateSaveStatus('saving');
+            showNotification('Updating post...', 'success');
+        });
+    </script>
+</body>
+</html>

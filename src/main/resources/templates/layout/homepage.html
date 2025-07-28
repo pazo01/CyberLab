@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberLab - Advanced Cybersecurity Learning Platform</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/homepage.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg">
+        <span th:each="i : ${#numbers.sequence(1, 300)}" class="matrix-cell"></span>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab
+                </a>
+                
+                <ul class="navbar-nav">
+                    <li><a th:href="@{/}" class="nav-link active"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a th:href="@{/labs}" class="nav-link"><i class="fas fa-flask"></i> Labs</a></li>
+                    <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-code"></i> Community</a></li>
+                    
+                    
+                    <!-- User Menu -->
+					<li sec:authorize="isAuthenticated() and !hasRole('ADMIN')">
+					    <a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+					</li>
+                    <li sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-cog"></i> Admin</a>
+                    </li>
+                    
+                    <!-- Auth Links -->
+                    <li sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/login}" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    </li>
+                    <li sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/register}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Join</a>
+                    </li>
+                    
+                    <!-- User Dropdown -->
+                    <li sec:authorize="isAuthenticated()" class="user-menu">
+                        <div class="user-dropdown">
+                            <button class="user-btn">
+                                <i class="fas fa-user"></i>
+                                <span sec:authentication="name">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a th:href="@{/profile}"><i class="fas fa-user-circle"></i> Profile</a>
+                                <hr>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        <span class="glitch-text" data-text="CyberLab">CyberLab</span>
+                        <span class="hero-subtitle">Advanced Cybersecurity Platform</span>
+                    </h1>
+                    <p class="hero-description">
+                        Master cybersecurity through hands-on virtual labs. Practice XSS, SQL Injection, 
+                        Cryptography, Binary Exploitation and more in a safe, controlled environment.
+                    </p>
+                    
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <span class="stat-number" th:text="${totalLabs ?: '12'}">12</span>
+                            <span class="stat-label">Virtual Labs</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" th:text="${totalUsers ?: '1,337'}">1,337</span>
+                            <span class="stat-label">Security Experts</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" th:text="${totalPosts ?: '4,200'}">4,200</span>
+                            <span class="stat-label">Community Posts</span>
+                        </div>
+                    </div>
+                    
+                    <div class="hero-actions">
+                        <a th:href="@{/labs}" class="btn btn-primary hero-btn">
+                            <i class="fas fa-flask"></i>
+                            Start Learning
+                            <span class="btn-glow"></span>
+                        </a>
+                        <a th:href="@{/posts}" class="btn btn-secondary hero-btn">
+                            <i class="fas fa-users"></i>
+                            Join Community
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="hero-visual">
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            <div class="terminal-controls">
+                                <span class="control red"></span>
+                                <span class="control yellow"></span>
+                                <span class="control green"></span>
+                            </div>
+                            <div class="terminal-title">root@cyberlab:~#</div>
+                        </div>
+                        <div class="terminal-body">
+                            <div class="terminal-line">
+                                <span class="prompt">root@cyberlab:~#</span>
+                                <span class="command" id="typingText"></span>
+                                <span class="cursor">█</span>
+                            </div>
+                            <div class="terminal-output" id="terminalOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating Code Elements -->
+        <div class="floating-code-bg">
+            <div class="code-snippet" style="top: 10%; left: 5%;">&lt;script&gt;alert('XSS')&lt;/script&gt;</div>
+            <div class="code-snippet" style="top: 20%; right: 10%;">SELECT * FROM users WHERE id=1 OR 1=1</div>
+            <div class="code-snippet" style="bottom: 30%; left: 8%;">../../../etc/passwd</div>
+            <div class="code-snippet" style="bottom: 20%; right: 5%;">0x41414141</div>
+            <div class="code-snippet" style="top: 60%; left: 15%;">import hashlib</div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="glitch-text" data-text="Training Modules">Training Modules</span>
+            </h2>
+            
+            <div class="features-grid">
+                <div class="feature-card" th:each="category : ${categories}">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-virus" th:if="${category.name == 'XSS'}"></i>
+                        <i class="fas fa-database" th:if="${category.name == 'SQL Injection'}"></i>
+                        <i class="fas fa-folder-open" th:if="${category.name == 'Path Traversal'}"></i>
+                        <i class="fas fa-key" th:if="${category.name == 'Cryptography'}"></i>
+                        <i class="fas fa-microchip" th:if="${category.name == 'Binary Exploitation'}"></i>
+                        <i class="fas fa-search" th:if="${category.name == 'OSINT'}"></i>
+                        <i class="fas fa-bug" th:unless="${#lists.contains({'XSS','SQL Injection','Path Traversal','Cryptography','Binary Exploitation','OSINT'}, category.name)}"></i>
+                    </div>
+                    <h3 th:text="${category.name}">Category Name</h3>
+                    <p th:text="${category.description}">Category description</p>
+                    <div class="feature-stats">
+                        <span class="lab-count" th:text="${category.postCount + ' posts'}">10 posts</span>
+                        <span class="difficulty">Multiple Levels</span>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Popular Labs Section -->
+    <section class="popular-labs" th:if="${popularLabs}">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="glitch-text" data-text="Popular Labs">Popular Labs</span>
+            </h2>
+            
+            <div class="labs-grid">
+                <div class="lab-card" th:each="lab : ${popularLabs}">
+                    <div class="lab-header">
+                        <div class="lab-difficulty" th:classappend="${lab.difficulty.name().toLowerCase()}">
+                            <span th:text="${lab.difficulty.displayName}">Beginner</span>
+                        </div>
+                        <div class="lab-views">
+                            <i class="fas fa-eye"></i>
+                            <span th:text="${lab.viewCount}">1.2k</span>
+                        </div>
+                    </div>
+                    
+                    <h3 class="lab-title" th:text="${lab.title}">XSS Fundamentals</h3>
+                    <p class="lab-description" th:text="${lab.description}">Learn about Cross-Site Scripting attacks</p>
+                    
+                    <div class="lab-meta">
+                        <span class="lab-category" th:text="${lab.category.name}">XSS</span>
+                        <span class="lab-time" th:text="${lab.estimatedTimeFormatted}">30 min</span>
+                    </div>
+                    
+                    <div class="lab-progress" sec:authorize="isAuthenticated()">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="progress-text">Not Started</span>
+                    </div>
+                    
+                    <a th:href="@{/labs/{id}(id=${lab.id})}" class="lab-link">
+                        <span sec:authorize="!isAuthenticated()">View Theory</span>
+                        <span sec:authorize="isAuthenticated()">Start Lab</span>
+                        <i class="fas fa-play"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Recent Posts Section -->
+    <section class="recent-posts" th:if="${recentPosts}">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="glitch-text" data-text="Community Highlights">Community Highlights</span>
+            </h2>
+            
+            <div class="posts-grid">
+                <article class="post-card" th:each="post : ${recentPosts}">
+                    <div class="post-header">
+                        <div class="post-type" th:text="${post.postType.displayName}">Script</div>
+                        <div class="post-category" th:text="${post.category.name}">XSS</div>
+                    </div>
+                    
+                    <h3 class="post-title">
+                        <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">
+                            Advanced XSS Payload Collection
+                        </a>
+                    </h3>
+                    
+                    <p class="post-excerpt" th:text="${#strings.abbreviate(post.content, 120)}">
+                        Here are some advanced XSS payloads I've collected from various CTFs and bug bounty programs...
+                    </p>
+                    
+                    <div class="post-meta">
+                        <div class="post-author">
+                            <i class="fas fa-user"></i>
+                            <span th:text="${post.author.username}">alice_hacker</span>
+                        </div>
+                        <div class="post-stats">
+                            <span class="views">
+                                <i class="fas fa-eye"></i>
+                                <span th:text="${post.viewCount}">156</span>
+                            </span>
+                            <span class="comments">
+                                <i class="fas fa-comments"></i>
+                                <span th:text="${post.commentCount}">23</span>
+                            </span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="section-footer">
+                <a th:href="@{/posts}" class="btn btn-secondary">
+                    View All Posts <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Start Your Cybersecurity Journey?</h2>
+                <p>Join thousands of security professionals learning through hands-on practice</p>
+                
+                <div class="cta-actions">
+                    <a th:href="@{/register}" class="btn btn-primary" sec:authorize="!isAuthenticated()">
+                        <i class="fas fa-rocket"></i>
+                        Get Started Free
+                    </a>
+                    <a th:href="@{/labs}" class="btn btn-primary" sec:authorize="isAuthenticated()">
+                        <i class="fas fa-flask"></i>
+                        Continue Learning
+                    </a>
+                    <a th:href="@{/about}" class="btn btn-secondary">
+                        <i class="fas fa-info-circle"></i>
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>CyberLab</h4>
+                    <p>Advanced cybersecurity education platform with hands-on virtual labs.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-discord"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Learn</h5>
+                    <ul>
+                        <li><a th:href="@{/labs}">Virtual Labs</a></li>
+                        <li><a th:href="@{/posts}">Community</a></li>
+                        <li><a th:href="@{/categories}">Categories</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Support</h5>
+                    <ul>
+                        <li><a th:href="@{/about}">About</a></li>
+                        <li><a th:href="@{/contact}">Contact</a></li>
+                        <li><a href="#">Help</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 CyberLab. Secure • Educational • Open Source</p>
+                <div class="footer-security">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Encrypted Connection</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script th:src="@{/js/app.js}"></script>
+    <script th:src="@{/js/homepage.js}"></script>
+</body>
+</html>

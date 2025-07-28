@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Manage Reports - CyberLab Admin</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- STOP ALL ANIMATIONS -->
+    <style>
+        *, *::before, *::after {
+            animation-duration: 0s !important;
+            animation-delay: 0s !important;
+            transition-duration: 0s !important;
+            transition-delay: 0s !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-admin">
+        <div class="container">
+            <div class="navbar-content">
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab <span class="badge badge-admin">ADMIN</span>
+                </a>
+                
+                <ul class="navbar-nav">
+                    <li><a th:href="@{/}" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a th:href="@{/admin/users}" class="nav-link"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-file-alt"></i> Posts</a></li>
+                    <li><a th:href="@{/admin/reports}" class="nav-link active">
+                        <i class="fas fa-flag"></i> Reports
+                        <span class="notification-badge" th:if="${pendingCount > 0}" th:text="${pendingCount}">5</span>
+                    </a></li>
+                    
+                    <!-- Admin User Menu -->
+                    <li class="user-menu">
+                        <div class="user-dropdown">
+                            <button class="user-btn admin-btn">
+                                <i class="fas fa-user-shield"></i>
+                                <span th:text="${#authentication.name}">Admin</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Dashboard Content -->
+    <div class="admin-dashboard">
+        <div class="container">
+            <!-- Header -->
+            <div class="admin-header">
+                <h1>Reports Management</h1>
+                <p>Review and manage user reports across the platform</p>
+            </div>
+
+            <!-- System Stats -->
+            <div class="stats-grid admin-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-flag"></i>
+                    </div>
+                    <span class="stat-number" th:text="${totalReports}">0</span>
+                    <span class="stat-label">Total Reports</span>
+                    <div class="stat-change">
+                        <i class="fas fa-chart-line"></i>
+                        <span>All time</span>
+                    </div>
+                </div>
+
+                <div class="stat-card alert-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <span class="stat-number" th:text="${pendingCount}">0</span>
+                    <span class="stat-label">Pending Reports</span>
+                    <div class="stat-change negative">
+                        <i class="fas fa-clock"></i>
+                        <span>Requires attention</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <span class="stat-number" th:text="${resolvedCount}">0</span>
+                    <span class="stat-label">Resolved</span>
+                    <div class="stat-change positive">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span>Action taken</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                  <span class="stat-number" th:text="${totalReports - pendingCount - resolvedCount}">0</span>
+                    <span class="stat-label">Dismissed</span>
+                    <div class="stat-change">
+                        <i class="fas fa-ban"></i>
+                        <span>No action needed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports List -->
+            <div class="admin-section reports-section full-width">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> Reports List</h2>
+                    <div class="section-actions">
+                        <span class="results-count" th:text="'Showing ' + ${#lists.size(reports)} + ' reports'">Showing 0 reports</span>
+                    </div>
+                </div>
+                
+                <div class="reports-list" th:if="${!#lists.isEmpty(reports)}">
+                    <div class="report-item" th:each="report : ${reports}">
+                        <div class="report-header">
+                            <div class="report-meta">
+                                <span class="report-id">#<span th:text="${report.id}">1</span></span>
+                                <span class="report-type" th:classappend="${report.reportType.toLowerCase()}">
+                                    <i th:switch="${report.reportType}">
+                                        <i th:case="'POST'" class="fas fa-file-alt"></i>
+                                        <i th:case="'COMMENT'" class="fas fa-comment"></i>
+                                        <i th:case="'USER'" class="fas fa-user"></i>
+                                        <i th:case="*" class="fas fa-flag"></i>
+                                    </i>
+                                    <span th:text="${report.reportType}">COMMENT</span>
+                                </span>
+                                <span class="report-status" th:classappend="${report.status.name().toLowerCase()}">
+                                    <span th:text="${report.status.displayName}">Pending</span>
+                                </span>
+                            </div>
+                            <span class="report-time" th:text="${#temporals.format(report.createdDate, 'dd/MM/yyyy HH:mm')}">28/07/2025 01:00</span>
+                        </div>
+                        
+                        <div class="report-content">
+                            <h4 class="report-reason" th:text="${report.reason.displayName}">Inappropriate content in post</h4>
+                            <div class="report-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-user"></i>
+                                    <span>Reported by: <strong th:text="${report.reportedBy.username}">user123</strong></span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-target"></i>
+                                    <span>Target: <strong th:text="${report.reportedContent}">Post #45</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="report-actions">
+                            <div class="action-group">
+                                <!-- View Post/Comment -->
+                                <button class="btn btn-sm btn-info" th:onclick="'viewReportedContent(' + ${report.id} + ')'">
+                                    <i class="fas fa-eye"></i> View Content
+                                </button>
+                                <!-- Mark as Resolved -->
+                                <button class="btn btn-sm btn-success" th:onclick="'resolveReport(' + ${report.id} + ')'">
+                                    <i class="fas fa-check"></i> Resolve
+                                </button>
+                                <!-- Delete Comment/Post -->
+                                <button class="btn btn-sm btn-danger" th:onclick="'deleteReportedContent(' + ${report.id} + ')'">
+                                    <i class="fas fa-trash"></i> Delete Content
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(reports)}" class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h3>No Reports Found</h3>
+                    <p>No reports available at the moment.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        function viewReportedContent(reportId) {
+            // Redirect to the post/comment that was reported
+            fetch('/admin/reports/' + reportId + '/content-url', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.contentUrl) {
+                    window.open(data.contentUrl, '_blank');
+                } else {
+                    showNotification('Unable to view content', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error loading content', 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        function resolveReport(reportId) {
+            if (confirm('Are you sure you want to resolve this report?')) {
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                
+                fetch('/admin/reports/' + reportId + '/resolve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: 'notes=Resolved from admin panel'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Network response was not ok');
+                    }
+                })
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Report resolved successfully', 'success');
+                        location.reload();
+                    } else {
+                        showNotification('Error: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error resolving report', 'error');
+                    console.error('Error:', error);
+                });
+            }
+        }
+        
+        function deleteReportedContent(reportId) {
+            if (confirm('Are you sure you want to DELETE the reported content? This action cannot be undone.')) {
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                
+                fetch('/admin/reports/' + reportId + '/delete-content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: 'action=delete-content&notes=Content deleted by admin'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Network response was not ok');
+                    }
+                })
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Content deleted successfully', 'success');
+                        location.reload();
+                    } else {
+                        showNotification('Error: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error deleting content', 'error');
+                    console.error('Error:', error);
+                });
+            }
+        }
+        
+        function bulkResolve() {
+            // Function removed
+        }
+        
+        function exportReports() {
+            // Function removed
+        }
+        
+        function showReportStats() {
+            // Function removed
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = 'notification ' + type;
+            notification.textContent = message;
+            notification.style.cssText = 
+                'position: fixed; top: 20px; right: 20px; padding: 15px; border-radius: 5px; color: white; z-index: 1000; background-color: ' + 
+                (type === 'success' ? '#28a745' : type === 'info' ? '#17a2b8' : '#dc3545') + ';';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

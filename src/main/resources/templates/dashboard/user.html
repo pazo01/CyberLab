@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CyberLab</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a th:href="@{/}" class="navbar-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    CyberLab
+                </a>
+                
+                <ul class="navbar-nav">
+                    <li><a th:href="@{/}" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a th:href="@{/labs}" class="nav-link"><i class="fas fa-flask"></i> Labs</a></li>
+                    <li><a th:href="@{/posts}" class="nav-link"><i class="fas fa-code"></i> Community</a></li>
+                    <li><a th:href="@{/dashboard}" class="nav-link active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    
+                    <!-- User Dropdown -->
+                    <li class="user-menu">
+                        <div class="user-dropdown">
+                            <button class="user-btn">
+                                <i class="fas fa-user"></i>
+                                <span th:text="${#authentication.name}">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a th:href="@{/profile}"><i class="fas fa-user-circle"></i> Profile</a>
+                                <hr>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-container" style="padding-top: 180px;">
+        <div class="container">
+            <!-- Welcome Header -->
+            <div class="dashboard-header" style="margin-bottom: 40px;">
+                <h1>Welcome back, <span class="text-primary" th:text="${user.username}">hacker</span>!</h1>
+                <p class="text-light">Track your progress and continue your cybersecurity journey</p>
+            </div>
+
+            <!-- Single Stat Card -->
+            <div style="margin-bottom: 40px;">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <span class="stat-number" th:text="${userStats?.totalPosts ?: 0}">0</span>
+                    <span class="stat-label">Posts Created</span>
+                    <div class="stat-change positive">
+                        <i class="fas fa-medal"></i>
+                        <span th:text="${userStats?.totalComments ?: 0} + ' comments'">0 comments</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Progress Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-line"></i> Your Progress</h2>
+                        
+                    </div>
+                    
+                    <!-- Progress Chart -->
+                    <div class="progress-chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+
+                    <!-- Active Labs -->
+                    <div class="active-labs">
+                        <h3>Continue Learning</h3>
+                        <div class="lab-progress-list">
+                            <div class="lab-progress-item" th:each="progress : ${inProgressLabs}">
+                                <div class="lab-info">
+                                    <h4 th:text="${progress.lab.title}">XSS Fundamentals</h4>
+                                    <span class="lab-category" th:text="${progress.lab.category.name}">XSS</span>
+                                </div>
+                                <div class="progress-bar-wrapper">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" 
+                                             th:style="'width: ' + ${progress.completionPercentage ?: 0} + '%'"
+                                             th:attr="data-progress=${progress.completionPercentage ?: 0}">
+                                        </div>
+                                    </div>
+                                    <span class="progress-percentage" th:text="${(progress.completionPercentage ?: 0) + '%'}">0%</span>
+                                </div>
+                                <a th:href="@{/labs/{id}(id=${progress.lab.id})}" class="btn btn-sm btn-primary">
+                                    Continue <i class="fas fa-play"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-history"></i> Recent Activity</h2>
+                       
+                    </div>
+                    
+                    <div class="activity-timeline">
+                        <div class="activity-item" th:each="comment : ${recentComments}">
+                            <div class="activity-icon">
+                                <i class="fas fa-comment text-warning"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p th:text="'Commented on: ' + ${comment.post.title}">Commented on post</p>
+                                <span class="activity-time" th:text="${#temporals.format(comment.createdDate, 'MMM dd, yyyy')}">2 hours ago</span>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item" th:each="post : ${myRecentPosts}">
+                            <div class="activity-icon">
+                                <i class="fas fa-pen text-info"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p th:text="'Created post: ' + ${post.title}">Created new post</p>
+                                <span class="activity-time" th:text="${#temporals.format(post.createdDate, 'MMM dd, yyyy')}">1 day ago</span>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item" th:each="completed : ${recentlyCompleted}">
+                            <div class="activity-icon">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p th:text="'Completed: ' + ${completed.lab.title}">Completed lab</p>
+                                <span class="activity-time" th:text="${#temporals.format(completed.completedDate, 'MMM dd, yyyy')}">3 days ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommended Labs Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-lightbulb"></i> Recommended for You</h2>
+                        <a th:href="@{/labs}" class="view-all">Browse All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    
+                    <div class="recommended-labs">
+                        <div class="lab-card" th:each="lab : ${recommendedLabs}">
+                            <div class="lab-category-badge" th:text="${lab.category.name}">XSS</div>
+                            <h4 th:text="${lab.title}">Advanced XSS Techniques</h4>
+                            <p th:text="${lab.description}">Learn advanced XSS attack vectors</p>
+                            <div class="lab-meta">
+                                <span class="difficulty" th:text="${lab.difficulty}">Medium</span>
+                                <span class="duration" th:text="${lab.estimatedTime + ' min'}">45 min</span>
+                            </div>
+                            <a th:href="@{/labs/{id}(id=${lab.id})}" class="btn btn-primary btn-sm">
+                                Start Lab <i class="fas fa-play"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="dashboard-section quick-stats">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-bar"></i> Quick Stats</h2>
+                    </div>
+                    
+                    <div class="mini-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-number" th:text="${myRecentPosts.size()}">5</span>
+                            <span class="mini-stat-label">Posts Created</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-number" th:text="${recentComments.size()}">12</span>
+                            <span class="mini-stat-label">Comments Made</span>
+                        </div>
+                       
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions" style="margin-bottom: 80px;">
+                <h3>Quick Actions</h3>
+                <div class="action-cards">
+                    <a th:href="@{/labs}" class="action-card">
+                        <i class="fas fa-flask"></i>
+                        <span>Browse Labs</span>
+                    </a>
+                    <a th:href="@{/posts/create}" class="action-card">
+                        <i class="fas fa-pen"></i>
+                        <span>Write Post</span>
+                    </a>
+                    <a th:href="@{/profile}" class="action-card">
+                        <i class="fas fa-user"></i>
+                        <span>Edit Profile</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
+    <script th:inline="javascript">
+        // Pass data to JavaScript
+        const userStats = /*[[${userStats}]]*/ {};
+        const progressData = /*[[${inProgressLabs}]]*/ [];
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initDashboard === 'function') {
+                initDashboard(userStats, progressData);
+            }
+        });
+    </script>
+</body>
+</html>

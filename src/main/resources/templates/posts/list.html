@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum Community - CyberLab</title>
+    
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/posts.css}">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="matrix-bg">
+        <span th:each="i : ${#numbers.sequence(1, 100)}" class="matrix-cell"></span>
+    </div>
+
+    <nav th:replace="layout/base :: navbar"></nav>
+
+    <main class="forum-container" style="padding-top: 120px;">
+        <div class="container">
+            <div class="forum-header matrix-header" style="margin-top: 20px; padding-top: 80px;">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1 class="glitch-text" data-text="Community Forum">
+                            <i class="fas fa-comments"></i> Community Forum
+                            <span class="hero-subtitle">Share knowledge, discuss security, grow together</span>
+                        </h1>
+                        <p class="hero-description">
+                            Join our vibrant cybersecurity community. Share exploits, discuss vulnerabilities, 
+                            learn from experts, and contribute to the collective knowledge.
+                        </p>
+                    </div>
+                    
+                    <div class="header-visual">
+                        <div class="header-actions" sec:authorize="isAuthenticated()">
+                            <a th:href="@{/posts/create}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> New Post
+                                <span class="btn-glow"></span>
+                            </a>
+                            <a th:href="@{/dashboard}" class="btn btn-secondary">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                                <span class="btn-glow"></span>
+                            </a>
+                        </div>
+                        
+                        <div class="header-actions" sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/login}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> Login to Post
+                                <span class="btn-glow"></span>
+                            </a>
+                            <a th:href="@{/register}" class="btn btn-secondary">
+                                <i class="fas fa-user-plus"></i> Join Community
+                                <span class="btn-glow"></span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-controls">
+                    <form method="get" th:action="@{/posts}" class="filter-form">
+                        <select name="categoryId" class="filter-select" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            <option th:each="category : ${categories}" 
+                                    th:value="${category.id}" 
+                                    th:text="${category.name}"
+                                    th:selected="${currentCategory != null and currentCategory == category.id}">
+                                Category Name
+                            </option>
+                        </select>
+                        
+                        <input type="hidden" name="page" th:value="${currentPage ?: 0}">
+                    </form>
+                </div>
+            </div>
+
+            <div class="forum-grid">
+                <div class="posts-main">
+                    <div th:if="${pinnedPosts != null and !pinnedPosts.empty}" class="pinned-posts-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-thumbtack"></i> Pinned Posts</h2>
+                        </div>
+                        <div class="posts-list">
+                            <article th:each="post : ${pinnedPosts}" class="post-item pinned-post">
+                                <div class="post-content">
+                                    <div class="post-header">
+                                        <div class="post-badges">
+                                            <span class="post-pinned">
+                                                <i class="fas fa-thumbtack"></i> Pinned
+                                            </span>
+                                            <span class="post-type" th:classappend="${post.postType?.name()?.toLowerCase()}"
+                                                  th:text="${post.postType?.name() ?: 'DISCUSSION'}">
+                                                DISCUSSION
+                                            </span>
+                                            <span class="post-category" th:if="${post.category}"
+                                                  th:text="${post.category.name}">
+                                                Category
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="post-title">
+                                        <a th:href="@{'/posts/' + ${post.id}}" th:text="${post.title}">
+                                            Post Title Here
+                                        </a>
+                                    </div>
+
+                                    <div class="post-excerpt" th:text="${#strings.abbreviate(post.content, 200)}">
+                                        Post excerpt content here...
+                                    </div>
+
+                                    <div class="post-meta">
+                                        <span class="post-author">
+                                            <i class="fas fa-user"></i>
+                                            <a th:href="@{'/profile/' + ${post.author.id}}" th:text="${post.author.username}">
+                                                Author Name
+                                            </a>
+                                        </span>
+                                        <span class="post-date">
+                                            <i class="fas fa-clock"></i>
+                                            <span th:text="${#temporals.format(post.createdDate, 'MMM dd, yyyy HH:mm')}">
+                                                Dec 15, 2024 14:30
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <div class="post-footer">
+                                        <div class="post-stats">
+                                            <span class="stat">
+                                                <i class="fas fa-comments"></i>
+                                                <span th:text="${post.commentCount ?: 0}">12</span> comments
+                                            </span>
+                                            <span class="stat">
+                                                <i class="fas fa-eye"></i>
+                                                <span th:text="${post.viewCount ?: 0}">156</span> views
+                                            </span>
+                                        </div>
+
+                                        <div class="post-actions" sec:authorize="isAuthenticated()">
+                                            <a th:href="@{'/posts/' + ${post.id}}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+
+                    <div class="regular-posts-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-list"></i> Recent Discussions 
+                                <span class="posts-count">(<span th:text="${totalPosts ?: 0}">1,247</span> posts)</span>
+                            </h2>
+                        </div>
+
+                        <div class="posts-list">
+                            <article th:each="post : ${posts}" class="post-item">
+                                <div class="post-content">
+                                    <div class="post-header">
+                                        <div class="post-badges">
+                                            <span class="post-type" th:classappend="${post.postType?.name()?.toLowerCase() ?: 'discussion'}"
+                                                  th:text="${post.postType?.name() ?: 'DISCUSSION'}">
+                                                DISCUSSION
+                                            </span>
+                                            <span class="post-category" th:if="${post.category}"
+                                                  th:text="${post.category.name}">
+                                                Category
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="post-title">
+                                        <a th:href="@{'/posts/' + ${post.id}}" th:text="${post.title}">
+                                            How to perform XSS testing in modern web applications?
+                                        </a>
+                                    </div>
+
+                                    <div class="post-excerpt" th:text="${#strings.abbreviate(post.content, 200)}">
+                                        I'm trying to understand the best practices for XSS testing...
+                                    </div>
+
+                                    <div class="post-tags" th:if="${post.tags}">
+                                        <span th:each="tag : ${#strings.listSplit(post.tags, ',')}" 
+                                              class="tag" th:text="${#strings.trim(tag)}">
+                                            xss
+                                        </span>
+                                    </div>
+
+                                    <div class="post-meta">
+                                        <span class="post-author">
+                                            <i class="fas fa-user"></i>
+                                            <a th:href="@{'/profile/' + ${post.author.id}}" th:text="${post.author.username}">
+                                                cybersec_expert
+                                            </a>
+                                        </span>
+                                        <span class="post-date">
+                                            <i class="fas fa-clock"></i>
+                                            <span th:text="${#temporals.format(post.createdDate, 'MMM dd, yyyy HH:mm')}">
+                                                Dec 15, 2024 14:30
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <div class="post-footer">
+                                        <div class="post-stats">
+                                            <span class="stat">
+                                                <i class="fas fa-comments"></i>
+                                                <span th:text="${post.commentCount ?: 0}">5</span> 
+                                                <span th:text="${post.commentCount == 1} ? 'comment' : 'comments'">comments</span>
+                                            </span>
+                                            <span class="stat">
+                                                <i class="fas fa-eye"></i>
+                                                <span th:text="${post.viewCount ?: 0}">89</span> views
+                                            </span>
+                                        </div>
+
+                                        <div class="post-actions" sec:authorize="isAuthenticated()">
+                                            <a th:href="@{'/posts/' + ${post.id}}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+
+                        <div th:if="${posts == null or posts.empty}" class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-comments"></i>
+                                <div class="icon-pulse"></div>
+                            </div>
+                            <h3>No Posts Found</h3>
+                            <p>Be the first to start a discussion in our community!</p>
+                            <div class="empty-actions">
+                                <a th:href="@{/posts/create}" class="btn btn-primary" sec:authorize="isAuthenticated()">
+                                    <i class="fas fa-plus"></i> Create First Post
+                                </a>
+                                <a th:href="@{/login}" class="btn btn-primary" sec:authorize="!isAuthenticated()">
+                                    <i class="fas fa-sign-in-alt"></i> Login to Post
+                                </a>
+                                <a th:href="@{/labs}" class="btn btn-secondary">
+                                    <i class="fas fa-flask"></i> Explore Labs
+                                </a>
+                            </div>
+                        </div>
+
+                        <div th:if="${posts != null and !posts.empty and totalPages > 1}" class="pagination-container">
+                            <nav class="pagination">
+                                <a th:if="${currentPage > 0}" 
+                                   th:href="@{/posts(page=${currentPage - 1}, size=${pageSize}, sort=${currentSort}, category=${currentCategory})}" 
+                                   class="page-link">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                                
+                                <span th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                                      th:if="${pageNum >= currentPage - 2 and pageNum <= currentPage + 2}">
+                                    <a th:href="@{/posts(page=${pageNum}, size=${pageSize}, sort=${currentSort}, category=${currentCategory})}" 
+                                       class="page-link"
+                                       th:classappend="${pageNum == currentPage} ? 'active'"
+                                       th:text="${pageNum + 1}">1</a>
+                                </span>
+                                
+                                <a th:if="${currentPage < totalPages - 1}" 
+                                   th:href="@{/posts(page=${currentPage + 1}, size=${pageSize}, sort=${currentSort}, category=${currentCategory})}" 
+                                   class="page-link">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </nav>
+                            
+                            <div class="page-info">
+                                Showing <span th:text="${(currentPage * pageSize) + 1}">1</span> to 
+                                <span th:text="${T(java.lang.Math).min((currentPage + 1) * pageSize, totalPosts)}">10</span> 
+                                of <span th:text="${totalPosts}">247</span> posts
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="forum-sidebar">
+                    <div class="sidebar-card">
+                        <h3><i class="fas fa-chart-line"></i> Forum Stats</h3>
+                        <div class="forum-stats">
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-value" th:text="${totalPosts ?: 1247}">1,247</span>
+                                    <span class="stat-label">Total Posts</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-card rules-card">
+                        <h3><i class="fas fa-shield-alt"></i> Community Rules</h3>
+                        <ol>
+                            <li>Keep discussions relevant to cybersecurity</li>
+                            <li>Be respectful and constructive in your comments</li>
+                            <li>No sharing of illegal tools or exploits</li>
+                            <li>Use appropriate tags and categories</li>
+                            <li>Search before posting to avoid duplicates</li>
+                            <li>Provide context and details in your questions</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:src="@{/js/base.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('CyberLab Forum loaded - Clean mode');
+        });
+    </script>
+</body>
+</html>
