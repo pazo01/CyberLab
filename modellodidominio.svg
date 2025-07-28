@@ -1,0 +1,233 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .entity { fill: #f8f9fa; stroke: #2c3e50; stroke-width: 2; }
+      .entity-title { fill: #2c3e50; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; }
+      .entity-attr { fill: #34495e; font-family: Arial, sans-serif; font-size: 11px; }
+      .pk { fill: #e74c3c; font-weight: bold; }
+      .fk { fill: #3498db; font-weight: bold; }
+      .relationship { stroke: #2c3e50; stroke-width: 2; fill: none; }
+      .relationship-label { fill: #7f8c8d; font-family: Arial, sans-serif; font-size: 10px; }
+      .crow-foot { stroke: #2c3e50; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+  
+  <!-- User Entity -->
+  <rect x="50" y="50" width="180" height="200" class="entity"/>
+  <text x="140" y="70" text-anchor="middle" class="entity-title">User</text>
+  <line x1="60" y1="80" x2="220" y2="80" stroke="#2c3e50" stroke-width="1"/>
+  <text x="60" y="95" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="60" y="110" class="entity-attr">+ username: String</text>
+  <text x="60" y="125" class="entity-attr">+ email: String</text>
+  <text x="60" y="140" class="entity-attr">+ password: String</text>
+  <text x="60" y="155" class="entity-attr">+ profileImage: String</text>
+  <text x="60" y="170" class="entity-attr">+ role: UserRole</text>
+  <text x="60" y="185" class="entity-attr">+ status: UserStatus</text>
+  <text x="60" y="200" class="entity-attr">+ createdAt: DateTime</text>
+  <text x="60" y="215" class="entity-attr">+ lastLogin: DateTime</text>
+  
+  <!-- Post Entity -->
+  <rect x="300" y="50" width="180" height="180" class="entity"/>
+  <text x="390" y="70" text-anchor="middle" class="entity-title">Post</text>
+  <line x1="310" y1="80" x2="470" y2="80" stroke="#2c3e50" stroke-width="1"/>
+  <text x="310" y="95" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="310" y="110" class="entity-attr">+ title: String</text>
+  <text x="310" y="125" class="entity-attr">+ content: Text</text>
+  <text x="310" y="140" class="entity-attr fk">+ authorId: Long (FK)</text>
+  <text x="310" y="155" class="entity-attr fk">+ categoryId: Long (FK)</text>
+  <text x="310" y="170" class="entity-attr">+ createdAt: DateTime</text>
+  <text x="310" y="185" class="entity-attr">+ updatedAt: DateTime</text>
+  <text x="310" y="200" class="entity-attr">+ isVisible: Boolean</text>
+  <text x="310" y="215" class="entity-attr">+ viewCount: Integer</text>
+  
+  <!-- Comment Entity -->
+  <rect x="550" y="50" width="180" height="160" class="entity"/>
+  <text x="640" y="70" text-anchor="middle" class="entity-title">Comment</text>
+  <line x1="560" y1="80" x2="720" y2="80" stroke="#2c3e50" stroke-width="1"/>
+  <text x="560" y="95" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="560" y="110" class="entity-attr">+ content: Text</text>
+  <text x="560" y="125" class="entity-attr fk">+ authorId: Long (FK)</text>
+  <text x="560" y="140" class="entity-attr fk">+ postId: Long (FK)</text>
+  <text x="560" y="155" class="entity-attr">+ createdAt: DateTime</text>
+  <text x="560" y="170" class="entity-attr">+ updatedAt: DateTime</text>
+  <text x="560" y="185" class="entity-attr">+ isVisible: Boolean</text>
+  <text x="560" y="200" class="entity-attr">+ likeCount: Integer</text>
+  
+  <!-- Category Entity -->
+  <rect x="300" y="280" width="180" height="140" class="entity"/>
+  <text x="390" y="300" text-anchor="middle" class="entity-title">Category</text>
+  <line x1="310" y1="310" x2="470" y2="310" stroke="#2c3e50" stroke-width="1"/>
+  <text x="310" y="325" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="310" y="340" class="entity-attr">+ name: String</text>
+  <text x="310" y="355" class="entity-attr">+ description: String</text>
+  <text x="310" y="370" class="entity-attr">+ color: String</text>
+  <text x="310" y="385" class="entity-attr">+ isActive: Boolean</text>
+  <text x="310" y="400" class="entity-attr fk">+ createdBy: Long (FK)</text>
+  
+  <!-- Lab Entity -->
+  <rect x="50" y="300" width="180" height="160" class="entity"/>
+  <text x="140" y="320" text-anchor="middle" class="entity-title">Lab</text>
+  <line x1="60" y1="330" x2="220" y2="330" stroke="#2c3e50" stroke-width="1"/>
+  <text x="60" y="345" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="60" y="360" class="entity-attr">+ name: String</text>
+  <text x="60" y="375" class="entity-attr">+ description: Text</text>
+  <text x="60" y="390" class="entity-attr">+ type: LabType</text>
+  <text x="60" y="405" class="entity-attr">+ difficulty: Difficulty</text>
+  <text x="60" y="420" class="entity-attr">+ instructions: Text</text>
+  <text x="60" y="435" class="entity-attr">+ isActive: Boolean</text>
+  
+  <!-- LabSession Entity -->
+  <rect x="50" y="520" width="180" height="140" class="entity"/>
+  <text x="140" y="540" text-anchor="middle" class="entity-title">LabSession</text>
+  <line x1="60" y1="550" x2="220" y2="550" stroke="#2c3e50" stroke-width="1"/>
+  <text x="60" y="565" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="60" y="580" class="entity-attr fk">+ userId: Long (FK)</text>
+  <text x="60" y="595" class="entity-attr fk">+ labId: Long (FK)</text>
+  <text x="60" y="610" class="entity-attr">+ startTime: DateTime</text>
+  <text x="60" y="625" class="entity-attr">+ endTime: DateTime</text>
+  <text x="60" y="640" class="entity-attr">+ status: SessionStatus</text>
+  <text x="60" y="655" class="entity-attr">+ score: Integer</text>
+  
+  <!-- Like Entity -->
+  <rect x="800" y="50" width="150" height="100" class="entity"/>
+  <text x="875" y="70" text-anchor="middle" class="entity-title">Like</text>
+  <line x1="810" y1="80" x2="940" y2="80" stroke="#2c3e50" stroke-width="1"/>
+  <text x="810" y="95" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="810" y="110" class="entity-attr fk">+ userId: Long (FK)</text>
+  <text x="810" y="125" class="entity-attr fk">+ commentId: Long (FK)</text>
+  <text x="810" y="140" class="entity-attr">+ createdAt: DateTime</text>
+  
+  <!-- Report Entity -->
+  <rect x="800" y="200" width="150" height="140" class="entity"/>
+  <text x="875" y="220" text-anchor="middle" class="entity-title">Report</text>
+  <line x1="810" y1="230" x2="940" y2="230" stroke="#2c3e50" stroke-width="1"/>
+  <text x="810" y="245" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="810" y="260" class="entity-attr fk">+ reporterId: Long (FK)</text>
+  <text x="810" y="275" class="entity-attr fk">+ commentId: Long (FK)</text>
+  <text x="810" y="290" class="entity-attr">+ reason: ReportReason</text>
+  <text x="810" y="305" class="entity-attr">+ status: ReportStatus</text>
+  <text x="810" y="320" class="entity-attr fk">+ reviewedBy: Long (FK)</text>
+  
+  <!-- Activity Entity -->
+  <rect x="300" y="480" width="180" height="140" class="entity"/>
+  <text x="390" y="500" text-anchor="middle" class="entity-title">Activity</text>
+  <line x1="310" y1="510" x2="470" y2="510" stroke="#2c3e50" stroke-width="1"/>
+  <text x="310" y="525" class="entity-attr pk">+ id: Long (PK)</text>
+  <text x="310" y="540" class="entity-attr fk">+ userId: Long (FK)</text>
+  <text x="310" y="555" class="entity-attr">+ activityType: ActivityType</text>
+  <text x="310" y="570" class="entity-attr">+ entityId: Long</text>
+  <text x="310" y="585" class="entity-attr">+ entityType: String</text>
+  <text x="310" y="600" class="entity-attr">+ description: String</text>
+  
+  <!-- Relationships -->
+  
+  <!-- User to Post (1:N) -->
+  <line x1="230" y1="140" x2="300" y2="140" class="relationship"/>
+  <circle cx="230" cy="140" r="3" fill="#2c3e50"/>
+  <line x1="295" y1="135" x2="300" y2="140" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="295" y1="145" x2="300" y2="140" stroke="#2c3e50" stroke-width="2"/>
+  <text x="235" y="130" class="relationship-label">1</text>
+  <text x="285" y="130" class="relationship-label">*</text>
+  <text x="260" y="155" class="relationship-label">creates</text>
+  
+  <!-- Post to Comment (1:N) -->
+  <line x1="480" y1="140" x2="550" y2="140" class="relationship"/>
+  <circle cx="480" cy="140" r="3" fill="#2c3e50"/>
+  <line x1="545" y1="135" x2="550" y2="140" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="545" y1="145" x2="550" y2="140" stroke="#2c3e50" stroke-width="2"/>
+  <text x="485" y="130" class="relationship-label">1</text>
+  <text x="535" y="130" class="relationship-label">*</text>
+  <text x="510" y="155" class="relationship-label">has</text>
+  
+  <!-- Category to Post (1:N) -->
+  <line x1="390" y1="280" x2="390" y2="230" class="relationship"/>
+  <circle cx="390" cy="280" r="3" fill="#2c3e50"/>
+  <line x1="385" y1="235" x2="390" y2="230" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="395" y1="235" x2="390" y2="230" stroke="#2c3e50" stroke-width="2"/>
+  <text x="375" y="275" class="relationship-label">1</text>
+  <text x="375" y="240" class="relationship-label">*</text>
+  <text x="395" y="255" class="relationship-label">contains</text>
+  
+  <!-- User to Comment (1:N) -->
+  <path d="M 140,250 Q 140,270 200,270 Q 640,270 640,210" class="relationship"/>
+  <circle cx="140" cy="250" r="3" fill="#2c3e50"/>
+  <line x1="635" y1="215" x2="640" y2="210" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="645" y1="215" x2="640" y2="210" stroke="#2c3e50" stroke-width="2"/>
+  <text x="145" y="265" class="relationship-label">1</text>
+  <text x="625" y="225" class="relationship-label">*</text>
+  <text x="380" y="285" class="relationship-label">writes</text>
+  
+  <!-- Comment to Like (1:N) -->
+  <line x1="730" y1="100" x2="800" y2="100" class="relationship"/>
+  <circle cx="730" cy="100" r="3" fill="#2c3e50"/>
+  <line x1="795" y1="95" x2="800" y2="100" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="795" y1="105" x2="800" y2="100" stroke="#2c3e50" stroke-width="2"/>
+  <text x="735" y="90" class="relationship-label">1</text>
+  <text x="785" y="90" class="relationship-label">*</text>
+  <text x="760" y="115" class="relationship-label">receives</text>
+  
+  <!-- Comment to Report (1:N) -->
+  <line x1="640" y1="210" x2="640" y2="250" class="relationship"/>
+  <line x1="640" y1="250" x2="800" y2="250" class="relationship"/>
+  <circle cx="640" cy="210" r="3" fill="#2c3e50"/>
+  <line x1="795" y1="245" x2="800" y2="250" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="795" y1="255" x2="800" y2="250" stroke="#2c3e50" stroke-width="2"/>
+  <text x="625" y="225" class="relationship-label">1</text>
+  <text x="785" y="240" class="relationship-label">*</text>
+  <text x="720" y="265" class="relationship-label">reported</text>
+  
+  <!-- User to LabSession (1:N) -->
+  <line x1="140" y1="250" x2="140" y2="520" class="relationship"/>
+  <circle cx="140" cy="250" r="3" fill="#2c3e50"/>
+  <line x1="135" y1="515" x2="140" y2="520" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="145" y1="515" x2="140" y2="520" stroke="#2c3e50" stroke-width="2"/>
+  <text x="125" y="265" class="relationship-label">1</text>
+  <text x="125" y="505" class="relationship-label">*</text>
+  <text x="145" y="385" class="relationship-label">participates</text>
+  
+  <!-- Lab to LabSession (1:N) -->
+  <line x1="140" y1="460" x2="140" y2="520" class="relationship"/>
+  <circle cx="140" cy="460" r="3" fill="#2c3e50"/>
+  <line x1="135" y1="515" x2="140" y2="520" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="145" y1="515" x2="140" y2="520" stroke="#2c3e50" stroke-width="2"/>
+  <text x="125" y="475" class="relationship-label">1</text>
+  <text x="125" y="505" class="relationship-label">*</text>
+  <text x="145" y="490" class="relationship-label">runs</text>
+  
+  <!-- User to Activity (1:N) -->
+  <path d="M 230,200 Q 270,200 270,550 Q 270,550 300,550" class="relationship"/>
+  <circle cx="230" cy="200" r="3" fill="#2c3e50"/>
+  <line x1="295" y1="545" x2="300" y2="550" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="295" y1="555" x2="300" y2="550" stroke="#2c3e50" stroke-width="2"/>
+  <text x="235" y="215" class="relationship-label">1</text>
+  <text x="285" y="540" class="relationship-label">*</text>
+  <text x="250" y="375" class="relationship-label">generates</text>
+  
+  <!-- User to Category (1:N) -->
+  <path d="M 140,250 Q 140,270 200,270 Q 260,270 260,350 Q 260,350 300,350" class="relationship"/>
+  <circle cx="140" cy="250" r="3" fill="#2c3e50"/>
+  <line x1="295" y1="345" x2="300" y2="350" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="295" y1="355" x2="300" y2="350" stroke="#2c3e50" stroke-width="2"/>
+  <text x="145" y="265" class="relationship-label">1</text>
+  <text x="285" y="340" class="relationship-label">*</text>
+  <text x="200" y="310" class="relationship-label">creates</text>
+  
+  <!-- User to Like (1:N) -->
+  <path d="M 230,100 Q 800,100 800,100" class="relationship"/>
+  <circle cx="230" cy="100" r="3" fill="#2c3e50"/>
+  <line x1="795" y1="95" x2="800" y2="100" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="795" y1="105" x2="800" y2="100" stroke="#2c3e50" stroke-width="2"/>
+  <text x="235" y="90" class="relationship-label">1</text>
+  <text x="785" y="90" class="relationship-label">*</text>
+  <text x="500" y="115" class="relationship-label">gives</text>
+  
+  <!-- User to Report (1:N) -->
+  <path d="M 230,150 Q 800,150 800,200" class="relationship"/>
+  <circle cx="230" cy="150" r="3" fill="#2c3e50"/>
+  <line x1="795" y1="195" x2="800" y2="200" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="805" y1="195" x2="800" y2="200" stroke="#2c3e50" stroke-width="2"/>
+  <text x="235" y="140" class="relationship-label">1</text>
+  <text x="785" y="190" class="relationship-label">*</text>
+  <text x="500" y="165" class="relationship-label">submits</text>
+  
+</svg>
